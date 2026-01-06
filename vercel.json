@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm install",
+  "devCommand": "npm start",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "index.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
