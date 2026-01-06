@@ -16,7 +16,7 @@ A simple, fun and modern chat app designed specifically for your family. Feature
 ## 🚀 Quick Start
 
 ### Requirements
-- Node.js >= 14.0.0
+- Node.js >= 18.0.0
 - npm
 
 ### Installation
