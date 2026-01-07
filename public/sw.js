@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-5-4';
+const CACHE_NAME = 'familieskatt-v1-5-5';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -83,6 +83,11 @@ self.addEventListener('fetch', event => {
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Track page visibility state
+  if (event.data && event.data.type === 'PAGE_VISIBILITY') {
+    self.pageVisible = event.data.visible;
   }
   
   // Handle notification from main thread
