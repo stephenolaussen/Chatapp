@@ -1184,6 +1184,15 @@
           localStorage.setItem('chatUserColor', currentUser.color);
           hideUserModal();
           updateUserDisplay();
+          
+          // Join room with updated user info
+          if (socket.connected) {
+            socket.emit('join', { 
+              room: room,
+              name: currentUser.name,
+              color: currentUser.color
+            });
+          }
         }
 
         // Update user display
@@ -1302,36 +1311,26 @@
           }
         });
 
-        // Socket events
+        // Socket events - Form submit handler
         form.addEventListener('submit', function(e) {
           e.preventDefault();
-          if (input.value) {
-            const msg = input.value;
-            socket.emit('chat message', { 
-              msg, 
-              room,
-              sender: currentUser.name,
-              color: currentUser.color
-            });
-            input.value = '';
-            document.getElementById('emojiPicker').classList.remove('show');
+          if (!input.value.trim()) return;
+          
+          if (!socket.connected) {
+            alert('Not connected to chat. Refreshing...');
+            window.location.reload();
+            return;
           }
-        });
-
-        // Socket events
-        form.addEventListener('submit', function(e) {
-          e.preventDefault();
-          if (input.value) {
-            const msg = input.value;
-            socket.emit('chat message', { 
-              msg, 
-              room,
-              sender: currentUser.name,
-              color: currentUser.color
-            });
-            input.value = '';
-            document.getElementById('emojiPicker').classList.remove('show');
-          }
+          
+          const msg = input.value.trim();
+          socket.emit('chat message', { 
+            msg, 
+            room,
+            sender: currentUser.name,
+            color: currentUser.color
+          });
+          input.value = '';
+          document.getElementById('emojiPicker').classList.remove('show');
         });
 
         socket.on('chat message', function(data) {
@@ -1411,12 +1410,22 @@
           });
         });
 
+        // Handle socket disconnection and reconnection
+        socket.on('disconnect', () => {
+          console.log('Disconnected from server');
+        });
+
         socket.on('connect', () => {
+          console.log('Connected to server');
           socket.emit('join', { 
             room: room,
             name: currentUser.name,
             color: currentUser.color
           });
+        });
+
+        socket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
         });
 
         // Track if page is visible/focused
