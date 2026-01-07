@@ -337,6 +337,31 @@
         transform: scale(0.95);
       }
 
+      .alarm-btn {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .alarm-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+      }
+
+      .alarm-btn:active {
+        transform: scale(0.95);
+      }
+
       /* Modal styles */
       .modal {
         display: none;
@@ -374,6 +399,15 @@
         to {
           transform: translateY(0);
           opacity: 1;
+        }
+      }
+
+      @keyframes alarm-flash {
+        0%, 100% {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        50% {
+          background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
         }
       }
 
@@ -771,6 +805,7 @@
 
     <form id="form" action="">
       <button type="button" class="emoji-btn" onclick="toggleEmojiPicker()">😊</button>
+      <button type="button" class="alarm-btn" onclick="sendAlarm()" title="Send alarm to all">🔔 ALARM</button>
       <div class="emoji-picker" id="emojiPicker">
         <span onclick="insertEmoji('😀')">😀</span>
         <span onclick="insertEmoji('😂')">😂</span>
@@ -1303,6 +1338,64 @@
               requireInteraction: false
             });
           }
+        }
+
+        // Send alarm to all users
+        function sendAlarm() {
+          const confirmAlarm = confirm('🚨 Send ALARM to all users in this room? Everyone will get a high-priority notification!');
+          if (confirmAlarm) {
+            socket.emit('alarm', {
+              room: room,
+              sender: currentUser.name,
+              timestamp: new Date()
+            });
+          }
+        }
+
+        // Handle incoming alarm
+        socket.on('alarm', function(data) {
+          // Show alarm notification with high priority
+          if ('Notification' in window && Notification.permission === 'granted') {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({
+                type: 'SHOW_ALARM',
+                title: `🚨 ALARM from ${data.sender}!`,
+                options: {
+                  body: 'ALARM! Check the chat immediately!',
+                  icon: '/icons/icon-192.png',
+                  badge: '/icons/icon-192.png',
+                  tag: `alarm-${Date.now()}`,
+                  requireInteraction: true,
+                  silent: false,
+                  urgency: 'high'
+                }
+              });
+            } else {
+              new Notification(`🚨 ALARM from ${data.sender}!`, {
+                body: 'ALARM! Check the chat immediately!',
+                icon: '/icons/favicon.svg',
+                badge: '/icons/favicon.svg',
+                tag: `alarm-${Date.now()}`,
+                requireInteraction: true,
+                silent: false
+              });
+            }
+          }
+          
+          // Add system message to chat
+          const item = document.createElement('li');
+          item.classList.add('system-message');
+          item.style.color = '#ff6b6b';
+          item.style.fontWeight = 'bold';
+          item.style.fontSize = '1.1rem';
+          item.textContent = `🚨 ${data.sender} sent an ALARM!`;
+          messagesList.appendChild(item);
+          
+          // Flash the screen
+          document.body.style.animation = 'none';
+          setTimeout(() => {
+            document.body.style.animation = 'alarm-flash 0.5s ease-in-out';
+          }, 10);
         }
 
         // Initialize on load

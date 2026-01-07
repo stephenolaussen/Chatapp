@@ -204,6 +204,14 @@ admin.on('connection', (socket) => {
         });
     });
 
+    socket.on('alarm', (data) => {
+        // Broadcast alarm to all clients in the room (including sender)
+        admin.in(data.room).emit('alarm', {
+            sender: data.sender,
+            timestamp: data.timestamp
+        });
+    });
+
     socket.on('disconnect', () => {
         // Remove user from all rooms
         for (const room in roomUsers) {

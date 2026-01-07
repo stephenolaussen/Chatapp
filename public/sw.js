@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-5-5';
+const CACHE_NAME = 'familieskatt-v1-6-5';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -93,6 +93,13 @@ self.addEventListener('message', event => {
   // Handle notification from main thread
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const { title, options } = event.data;
+    self.registration.showNotification(title, options);
+  }
+
+  // Handle alarm notification from main thread (high priority)
+  if (event.data && event.data.type === 'SHOW_ALARM') {
+    const { title, options } = event.data;
+    // Always show alarm even if page is visible
     self.registration.showNotification(title, options);
   }
 });
