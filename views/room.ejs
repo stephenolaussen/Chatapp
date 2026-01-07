@@ -340,14 +340,14 @@
       .alarm-btn {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
         border: none;
-        padding: 0.6rem 1.2rem;
-        border-radius: 25px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
         color: white;
         cursor: pointer;
         font-weight: 600;
         transition: all 0.2s;
-        font-size: 1rem;
-        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        font-size: 0.8rem;
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -745,13 +745,13 @@
       <div class="header-left">
         <a href="/" title="Back to home"><i class="fas fa-arrow-left"></i></a>
         <h1>💬 Familie chat - <%- room %></h1>
+        <button onclick="sendAlarm()" class="alarm-btn" title="Send alarm to all" style="margin-left: auto;">🔔 ALARM</button>
       </div>
       <div class="online-users">
         <span class="online-count" id="userCount">1</span>
         <button onclick="toggleUserList()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0;" title="Online users">
           <i class="fas fa-users"></i>
         </button>
-        <button onclick="sendAlarm()" class="alarm-btn" title="Send alarm to all" style="margin-left: 0.5rem;">🔔 ALARM</button>
       </div>
       <div class="user-list" id="userList"></div>
       <div class="user-info" id="userInfo" onclick="showUserModal()">
