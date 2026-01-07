@@ -1,1 +1,5 @@
-["Felles rom","Gutta krutt","Voksen serie prat"]
+[
+  {"name": "Felles rom"},
+  {"name": "Gutta krutt"},
+  {"name": "Voksen serie prat", "password": "SS"}
+]

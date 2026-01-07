@@ -16,8 +16,9 @@ var jsonParser = bodyParser.json();
 var fs = require('fs');
 
 app.get('/', (req, res) => {
-    res.render('index', {rooms: rooms});
-  });
+    const roomsForDisplay = rooms.map(r => typeof r === 'string' ? r : r.name);
+    res.render('index', {rooms: roomsForDisplay});
+});
 
 // These routes are now handled dynamically below
 // Keeping them for backwards compatibility if needed
@@ -27,6 +28,14 @@ app.get('/version', (req, res) => {
 });
 
 let rooms = JSON.parse(fs.readFileSync('./rooms.json', 'utf-8'));
+
+// Normalize rooms to support both string and object format
+rooms = rooms.map(room => {
+    if (typeof room === 'string') {
+        return { name: room };
+    }
+    return room;
+});
 
 // Helper function to get messages file path for a room
 function getMessagesFilePath(room) {
@@ -58,30 +67,63 @@ function saveRoomMessage(room, message) {
     }
 }
 
+// Helper function to get room info
+function getRoomInfo(roomName) {
+    return rooms.find(room => {
+        const name = typeof room === 'string' ? room : room.name;
+        return name === roomName;
+    });
+}
+
 // Create routes for all rooms from rooms.json
 rooms.forEach(room => {
-    app.get('/' + encodeURIComponent(room), (req, res) => {
-        const messages = loadRoomMessages(room);
-        res.render('room', {room: room, messages: messages});
+    const roomName = typeof room === 'string' ? room : room.name;
+    app.get('/' + encodeURIComponent(roomName), (req, res) => {
+        const messages = loadRoomMessages(roomName);
+        res.render('room', {room: roomName, messages: messages});
     });
 });
 
-app.post('/newroom', jsonParser, (req, res) => {
-    const room = req.body.room;
+// Password verification endpoint
+app.post('/verify-password', jsonParser, (req, res) => {
+    const { room, password } = req.body;
+    const roomInfo = getRoomInfo(room);
     
-    if(!rooms.includes(room)) {
-        rooms.push(room);
+    if (!roomInfo) {
+        return res.json({ success: false, message: 'Room not found' });
+    }
+    
+    // Check if room requires password
+    if (roomInfo.password) {
+        if (password === roomInfo.password) {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, message: 'Incorrect password' });
+        }
+    } else {
+        // No password required
+        res.json({ success: true });
+    }
+});
+
+app.post('/newroom', jsonParser, (req, res) => {
+    const { room, password } = req.body;
+    
+    if(!rooms.find(r => (typeof r === 'string' ? r : r.name) === room)) {
+        const newRoom = password ? { name: room, password } : { name: room };
+        rooms.push(newRoom);
         
         // Create new route for this room
-        app.get('/' + encodeURIComponent(room), (req, res) => {
-            const messages = loadRoomMessages(room);
-            res.render('room', {room: room, messages: messages});
+        const roomName = typeof newRoom === 'string' ? newRoom : newRoom.name;
+        app.get('/' + encodeURIComponent(roomName), (req, res) => {
+            const messages = loadRoomMessages(roomName);
+            res.render('room', {room: roomName, messages: messages});
         });
         
         if(req.body.save) {
             let roomsFromFile = JSON.parse(fs.readFileSync('./rooms.json', 'utf-8'));
-            const newRooms = roomsFromFile.concat([room]);
-            fs.writeFileSync("./rooms.json", JSON.stringify(newRooms));
+            roomsFromFile.push(newRoom);
+            fs.writeFileSync("./rooms.json", JSON.stringify(roomsFromFile, null, 2));
         }
         res.json({
             'room': room

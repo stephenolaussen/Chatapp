@@ -737,6 +737,24 @@
       </div>
     </div>
 
+    <!-- Password modal -->
+    <div id="passwordModal" class="modal">
+      <div class="modal-content">
+        <h2>🔒 Enter Password</h2>
+        <p style="color: #666; margin-bottom: 1.5rem; text-align: center;">This room requires a password</p>
+        
+        <div class="form-group">
+          <label for="passwordInput">Password:</label>
+          <input type="password" id="passwordInput" placeholder="Enter password..." autocomplete="off">
+        </div>
+
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="verifyPassword()">Enter</button>
+          <button class="btn-secondary" onclick="goBack()">Back</button>
+        </div>
+      </div>
+    </div>
+
     <ul id="messages"></ul>
 
     <!-- Edit message modal -->
@@ -805,8 +823,10 @@
 
         const room = '<%-room%>';
         const userModal = document.getElementById('userModal');
+        const passwordModal = document.getElementById('passwordModal');
         const nameInput = document.getElementById('nameInput');
         const colorInput = document.getElementById('colorInput');
+        const passwordInput = document.getElementById('passwordInput');
         const userInfo = document.getElementById('userInfo');
         const userName = document.getElementById('userName');
         const colorOptions = document.querySelectorAll('.color-option');
@@ -828,6 +848,79 @@
         let form = document.getElementById('form');
         let input = document.getElementById('input');
         let messagesList = document.getElementById('messages');
+
+        // Check for password protection on page load
+        async function checkRoomPassword() {
+          try {
+            const response = await fetch('/verify-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ room: room, password: null })
+            });
+            const data = await response.json();
+            
+            // If room requires password, show password modal
+            if (data.message === 'Incorrect password' || (data.success === false && data.message !== 'Incorrect password')) {
+              passwordModal.classList.add('show');
+              passwordInput.focus();
+              // Disable form and messages
+              form.style.pointerEvents = 'none';
+              form.style.opacity = '0.5';
+              messagesList.style.pointerEvents = 'none';
+              messagesList.style.opacity = '0.5';
+            }
+          } catch (err) {
+            console.log('Password check error:', err);
+          }
+        }
+
+        // Verify password
+        async function verifyPassword() {
+          const password = passwordInput.value;
+          if (!password) {
+            alert('Please enter a password');
+            return;
+          }
+
+          try {
+            const response = await fetch('/verify-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ room: room, password: password })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+              passwordModal.classList.remove('show');
+              form.style.pointerEvents = 'auto';
+              form.style.opacity = '1';
+              messagesList.style.pointerEvents = 'auto';
+              messagesList.style.opacity = '1';
+              passwordInput.value = '';
+            } else {
+              alert('Incorrect password');
+              passwordInput.value = '';
+              passwordInput.focus();
+            }
+          } catch (err) {
+            alert('Error verifying password');
+            console.log('Verification error:', err);
+          }
+        }
+
+        // Go back to home
+        function goBack() {
+          window.location.href = '/';
+        }
+
+        // Allow Enter key to submit password
+        if (passwordInput) {
+          passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              verifyPassword();
+            }
+          });
+        }
 
         // Toggle user list
         function toggleUserList() {
@@ -1153,6 +1246,7 @@
         }
 
         // Initialize on load
+        checkRoomPassword();
         initializeUser();
         updateUserDisplay();
         requestNotificationPermission();
