@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-5-3';
+const CACHE_NAME = 'familieskatt-v1-5-4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -79,9 +79,34 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Message event for cache updates
+// Message event for cache updates and notifications
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  
+  // Handle notification from main thread
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data;
+    self.registration.showNotification(title, options);
+  }
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      // Focus existing window if open
+      for (let i = 0; i < clientList.length; i++) {
+        if (clientList[i].url === '/' && 'focus' in clientList[i]) {
+          return clientList[i].focus();
+        }
+      }
+      // Open new window if not open
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
 });
