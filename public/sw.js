@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-1-6';
+const CACHE_NAME = 'familieskatt-v1-2-0';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -48,6 +48,12 @@ self.addEventListener('fetch', event => {
 
   // Skip Socket.io requests
   if (request.url.includes('socket.io')) {
+    return;
+  }
+
+  // Don't cache room pages - always fetch from server to get latest messages
+  if (request.url.includes('/') && !request.url.endsWith('/') && !request.url.includes('/icons/') && !request.url.includes('cdnjs') && !request.url.includes('manifest')) {
+    event.respondWith(fetch(request).catch(() => caches.match('/')));
     return;
   }
 
