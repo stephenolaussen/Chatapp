@@ -615,6 +615,120 @@
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
       }
 
+      #gameCanvas {
+        display: block;
+        background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%);
+        border: none;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+      }
+
+      .game-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .game-modal.show {
+        display: flex;
+      }
+
+      .game-modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 90%;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .game-modal-content h2 {
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-around;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 10px;
+        gap: 1rem;
+      }
+
+      .game-stat {
+        flex: 1;
+      }
+
+      .game-stat-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 0.3rem;
+      }
+
+      .game-stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .game-instructions {
+        background: #f0f4ff;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+        color: #555;
+      }
+
+      .game-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .game-buttons button {
+        flex: 1;
+        padding: 0.8rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+      }
+
+      .btn-play {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-play:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-close-game {
+        background: #e5e7eb;
+        color: #333;
+      }
+
+      .btn-close-game:hover {
+        background: #d1d5db;
+      }
+
       @media (max-width: 600px) {
         * {
           -webkit-touch-callout: none;
@@ -752,6 +866,9 @@
         <button onclick="toggleUserList()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0;" title="Online users">
           <i class="fas fa-users"></i>
         </button>
+        <button onclick="openGameModal()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0 0.5rem;" title="Play Flappy Bird">
+          🎮
+        </button>
       </div>
       <div class="user-list" id="userList"></div>
       <div class="user-info" id="userInfo" onclick="showUserModal()">
@@ -810,6 +927,32 @@
     </div>
 
     <ul id="messages"></ul>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="game-modal">
+      <div class="game-modal-content">
+        <h2>🎮 Flappy Bird</h2>
+        <canvas id="gameCanvas" width="400" height="300"></canvas>
+        <div class="game-stats">
+          <div class="game-stat">
+            <div class="game-stat-label">Score</div>
+            <div class="game-stat-value" id="gameScore">0</div>
+          </div>
+          <div class="game-stat">
+            <div class="game-stat-label">Highscore</div>
+            <div class="game-stat-value" id="gameHighscore">0</div>
+          </div>
+        </div>
+        <div class="game-instructions">
+          <strong>Tap/Click to make the bird fly!</strong><br>
+          Avoid the pipes and get the highest score!
+        </div>
+        <div class="game-buttons">
+          <button class="btn-play" onclick="startGame()">Play</button>
+          <button class="btn-close-game" onclick="closeGameModal()">Close</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Edit message modal -->
     <div id="editModal" class="edit-modal">
@@ -1416,6 +1559,166 @@
             document.body.style.animation = 'alarm-flash 0.5s ease-in-out';
           }, 10);
         });
+
+        // ============ FLAPPY BIRD GAME ============
+        let gameState = {
+          canvas: document.getElementById('gameCanvas'),
+          ctx: null,
+          bird: { x: 50, y: 150, width: 20, height: 20, velocity: 0 },
+          pipes: [],
+          score: 0,
+          highscore: localStorage.getItem('flappyHighscore') || 0,
+          gameActive: false,
+          gameRunning: false,
+          pipeWidth: 60,
+          pipeGap: 80,
+          gravity: 0.4,
+          jumpPower: -8
+        };
+
+        function initGame() {
+          gameState.ctx = gameState.canvas.getContext('2d');
+          gameState.score = 0;
+          gameState.bird = { x: 50, y: 150, width: 20, height: 20, velocity: 0 };
+          gameState.pipes = [];
+          gameState.gameRunning = true;
+          gameState.gameActive = true;
+          document.getElementById('gameScore').textContent = '0';
+          document.getElementById('gameHighscore').textContent = gameState.highscore;
+          gameLoop();
+        }
+
+        function startGame() {
+          initGame();
+        }
+
+        function openGameModal() {
+          document.getElementById('gameModal').classList.add('show');
+          document.getElementById('gameHighscore').textContent = gameState.highscore;
+        }
+
+        function closeGameModal() {
+          document.getElementById('gameModal').classList.remove('show');
+          gameState.gameRunning = false;
+        }
+
+        function drawBird() {
+          gameState.ctx.fillStyle = '#FFD700';
+          gameState.ctx.beginPath();
+          gameState.ctx.arc(gameState.bird.x + gameState.bird.width / 2, gameState.bird.y + gameState.bird.height / 2, gameState.bird.width / 2, 0, Math.PI * 2);
+          gameState.ctx.fill();
+          
+          // Eyes
+          gameState.ctx.fillStyle = 'white';
+          gameState.ctx.beginPath();
+          gameState.ctx.arc(gameState.bird.x + 12, gameState.bird.y + 8, 3, 0, Math.PI * 2);
+          gameState.ctx.fill();
+          gameState.ctx.fillStyle = 'black';
+          gameState.ctx.beginPath();
+          gameState.ctx.arc(gameState.bird.x + 12, gameState.bird.y + 8, 1.5, 0, Math.PI * 2);
+          gameState.ctx.fill();
+        }
+
+        function drawPipes() {
+          gameState.ctx.fillStyle = '#228B22';
+          gameState.pipes.forEach(pipe => {
+            gameState.ctx.fillRect(pipe.x, 0, gameState.pipeWidth, pipe.topHeight);
+            gameState.ctx.fillRect(pipe.x, pipe.topHeight + gameState.pipeGap, gameState.pipeWidth, gameState.canvas.height - pipe.topHeight - gameState.pipeGap);
+          });
+        }
+
+        function updateGame() {
+          gameState.bird.velocity += gameState.gravity;
+          gameState.bird.y += gameState.bird.velocity;
+
+          // Generate pipes
+          if (gameState.pipes.length === 0 || gameState.pipes[gameState.pipes.length - 1].x < gameState.canvas.width - 150) {
+            const minHeight = 50;
+            const maxHeight = gameState.canvas.height - gameState.pipeGap - 50;
+            const randomHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+            gameState.pipes.push({ x: gameState.canvas.width, topHeight: randomHeight });
+          }
+
+          // Move pipes
+          gameState.pipes = gameState.pipes.filter(pipe => {
+            pipe.x -= 3;
+            if (pipe.x + gameState.pipeWidth < gameState.bird.x && !pipe.scored) {
+              pipe.scored = true;
+              gameState.score++;
+              document.getElementById('gameScore').textContent = gameState.score;
+            }
+            return pipe.x > -gameState.pipeWidth;
+          });
+
+          // Collision detection
+          if (gameState.bird.y + gameState.bird.height > gameState.canvas.height || gameState.bird.y < 0) {
+            endGame();
+            return;
+          }
+
+          gameState.pipes.forEach(pipe => {
+            if (
+              gameState.bird.x < pipe.x + gameState.pipeWidth &&
+              gameState.bird.x + gameState.bird.width > pipe.x &&
+              (gameState.bird.y < pipe.topHeight || gameState.bird.y + gameState.bird.height > pipe.topHeight + gameState.pipeGap)
+            ) {
+              endGame();
+            }
+          });
+        }
+
+        function endGame() {
+          gameState.gameRunning = false;
+          if (gameState.score > gameState.highscore) {
+            gameState.highscore = gameState.score;
+            localStorage.setItem('flappyHighscore', gameState.highscore);
+            document.getElementById('gameHighscore').textContent = gameState.highscore;
+            
+            // Send highscore to chat
+            const newHighscoreMsg = document.createElement('li');
+            newHighscoreMsg.classList.add('system-message');
+            newHighscoreMsg.style.color = '#FFD700';
+            newHighscoreMsg.style.fontWeight = 'bold';
+            newHighscoreMsg.style.fontSize = '1.1rem';
+            newHighscoreMsg.textContent = `🏆 ${currentUser.name} got a new Flappy Bird highscore: ${gameState.score}!`;
+            messagesList.appendChild(newHighscoreMsg);
+          }
+        }
+
+        function gameLoop() {
+          if (!gameState.gameRunning) return;
+
+          gameState.ctx.clearRect(0, 0, gameState.canvas.width, gameState.canvas.height);
+          
+          updateGame();
+          drawPipes();
+          drawBird();
+
+          requestAnimationFrame(gameLoop);
+        }
+
+        // Game controls
+        document.getElementById('gameCanvas').addEventListener('click', () => {
+          if (gameState.gameRunning) {
+            gameState.bird.velocity = gameState.jumpPower;
+          }
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.code === 'Space' && document.getElementById('gameModal').classList.contains('show')) {
+            e.preventDefault();
+            if (gameState.gameRunning) {
+              gameState.bird.velocity = gameState.jumpPower;
+            }
+          }
+        });
+
+        // Touch support for mobile
+        document.getElementById('gameCanvas').addEventListener('touchstart', () => {
+          if (gameState.gameRunning) {
+            gameState.bird.velocity = gameState.jumpPower;
+          }
+        }, { passive: true });
 
         // Initialize on load
         checkRoomPassword();
