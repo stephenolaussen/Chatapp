@@ -60,6 +60,7 @@
         gap: 0.5rem;
         font-size: 0.9rem;
         color: #666;
+        margin-top: 0.5rem;
       }
 
       .online-count {
@@ -239,8 +240,8 @@
       }
 
       #messages > li:not(.own-message) .message-bubble {
-        background: white;
-        color: #333;
+        background: var(--message-color, #667eea);
+        color: white;
         border-bottom-left-radius: 3px;
       }
 
@@ -937,7 +938,7 @@
                 <div class="message-time"><%= new Date(message.timestamp).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) %></div>
               </div>
             `;
-            item.style.borderLeft = `4px solid ${color}`;
+            item.style.setProperty('--message-color', color);
             messagesList.appendChild(item);
           <% }); %>
         <% } %>
@@ -1070,7 +1071,7 @@
               item.appendChild(actionsDiv);
             }
             if (data.color) {
-              item.style.borderLeft = `4px solid ${data.color}`;
+              item.style.setProperty('--message-color', data.color);
             }
           } else {
             // System message
