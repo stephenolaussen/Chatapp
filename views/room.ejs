@@ -2,7 +2,7 @@
 <html lang="no">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Familieskatt - Chat rom">
     <meta name="theme-color" content="#667eea">
     <title>Familie chat - <%- room %></title>
@@ -11,6 +11,12 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+      html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -24,6 +30,7 @@
         display: flex;
         flex-direction: column;
         color: #333;
+        overflow: hidden;
       }
 
       .header {
@@ -163,11 +170,45 @@
         flex-direction: column;
         max-width: 80%;
         word-wrap: break-word;
+        position: relative;
       }
 
       #messages > li.own-message {
         align-self: flex-end;
         max-width: 80%;
+      }
+
+      .message-actions {
+        display: none;
+        position: absolute;
+        top: 0.5rem;
+        right: -2.5rem;
+        gap: 0.5rem;
+        z-index: 10;
+      }
+
+      #messages > li.own-message .message-actions {
+        display: flex;
+      }
+
+      .message-actions button {
+        background: rgba(102, 126, 234, 0.8);
+        border: none;
+        color: white;
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .message-actions button:hover {
+        background: rgba(102, 126, 234, 1);
+        transform: scale(1.1);
       }
 
       .message-bubble {
@@ -434,7 +475,7 @@
 
       /* Emoji picker */
       .emoji-picker {
-        position: absolute;
+        position: fixed;
         bottom: 80px;
         right: 10px;
         background: rgba(255, 255, 255, 0.97);
@@ -448,6 +489,7 @@
         max-width: 320px;
         z-index: 500;
         border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
       }
 
       .emoji-picker.show {
@@ -479,7 +521,81 @@
         align-self: center;
       }
 
+      /* Edit message modal */
+      .edit-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .edit-modal.show {
+        display: flex;
+      }
+
+      .edit-modal-content {
+        background-color: white;
+        padding: 2.5rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 420px;
+        width: 90%;
+        animation: slideIn 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .edit-modal h2 {
+        margin-bottom: 1.5rem;
+        color: #333;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .edit-textarea {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 100px;
+        margin-bottom: 1.5rem;
+        transition: all 0.2s;
+      }
+
+      .edit-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
       @media (max-width: 600px) {
+        * {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
+        }
+
+        input, textarea, button {
+          -webkit-user-select: text;
+          user-select: text;
+        }
+
+        body {
+          overflow: hidden;
+          height: 100vh;
+          position: fixed;
+          width: 100%;
+        }
+
         #messages > li,
         #messages > li.own-message {
           max-width: 95%;
@@ -488,10 +604,81 @@
         .header {
           flex-direction: column;
           gap: 0.5rem;
+          padding: 0.75rem 0.75rem;
         }
 
         .header h1 {
           font-size: 1.2rem;
+        }
+
+        .header-left {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .online-users {
+          position: absolute;
+          right: 1rem;
+          top: 0.75rem;
+        }
+
+        .user-info {
+          padding: 0.5rem 1rem;
+          font-size: 0.9rem;
+        }
+
+        #form {
+          padding: 0.75rem;
+          gap: 0.5rem;
+          flex-wrap: nowrap;
+          flex-shrink: 0;
+        }
+
+        #form > button,
+        .emoji-btn {
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+
+        #input {
+          min-width: 0;
+          padding: 0.7rem 1rem;
+          font-size: 16px;
+        }
+
+        .emoji-btn {
+          padding: 0.5rem 0.75rem;
+          font-size: 1.2rem;
+        }
+
+        #form > button {
+          padding: 0.7rem 1.2rem;
+          font-size: 0.9rem;
+        }
+
+        #messages {
+          padding: 1rem 0.75rem;
+        }
+
+        .emoji-picker {
+          position: fixed;
+          bottom: 65px;
+          right: 0;
+          left: 0;
+          max-width: none;
+          width: 100%;
+          max-height: 200px;
+          grid-template-columns: repeat(5, 1fr);
+          border-radius: 20px 20px 0 0;
+          padding: 1rem;
+          overflow-y: auto;
+        }
+
+        .user-list {
+          top: 50px;
+          right: 5px;
+          left: 5px;
+          max-width: none;
         }
       }
     </style>
@@ -548,6 +735,18 @@
 
     <ul id="messages"></ul>
 
+    <!-- Edit message modal -->
+    <div id="editModal" class="edit-modal">
+      <div class="edit-modal-content">
+        <h2>✏️ Edit Message</h2>
+        <textarea id="editTextarea" class="edit-textarea" placeholder="Edit your message..."></textarea>
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="saveEditMessage()">Save</button>
+          <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <form id="form" action="">
       <button type="button" class="emoji-btn" onclick="toggleEmojiPicker()">😊</button>
       <div class="emoji-picker" id="emojiPicker">
@@ -590,6 +789,10 @@
         const colorOptions = document.querySelectorAll('.color-option');
         const userList = document.getElementById('userList');
         const userCount = document.getElementById('userCount');
+        const editModal = document.getElementById('editModal');
+        const editTextarea = document.getElementById('editTextarea');
+        
+        let currentEditMessageElement = null;
         
         let currentUser = {
           name: localStorage.getItem('chatUserName') || '',
@@ -735,6 +938,57 @@
           }
         });
 
+        // Edit message functions
+        function editMessage(messageElement) {
+          currentEditMessageElement = messageElement;
+          const messageText = messageElement.querySelector('.message-bubble > div:first-child').textContent;
+          editTextarea.value = messageText;
+          editModal.classList.add('show');
+          editTextarea.focus();
+          editTextarea.select();
+        }
+
+        function closeEditModal() {
+          editModal.classList.remove('show');
+          currentEditMessageElement = null;
+          editTextarea.value = '';
+        }
+
+        function saveEditMessage() {
+          const newText = editTextarea.value.trim();
+          if (!newText) {
+            alert('Message cannot be empty');
+            return;
+          }
+
+          // Update the message in UI
+          const messageContent = currentEditMessageElement.querySelector('.message-bubble > div:first-child');
+          messageContent.textContent = newText;
+          
+          // Emit update to server
+          socket.emit('edit message', {
+            room: room,
+            sender: currentUser.name,
+            newText: newText
+          });
+
+          closeEditModal();
+        }
+
+        // Close edit modal on click outside
+        editModal.addEventListener('click', (e) => {
+          if (e.target === editModal) {
+            closeEditModal();
+          }
+        });
+
+        // Allow Ctrl+Enter to save
+        editTextarea.addEventListener('keydown', (e) => {
+          if (e.ctrlKey && e.key === 'Enter') {
+            saveEditMessage();
+          }
+        });
+
         // Socket events
         form.addEventListener('submit', function(e) {
           e.preventDefault();
@@ -783,6 +1037,15 @@
             `;
             if (data.sender === currentUser.name) {
               item.classList.add('own-message');
+              // Add edit actions for own messages
+              const actionsDiv = document.createElement('div');
+              actionsDiv.className = 'message-actions';
+              actionsDiv.innerHTML = `
+                <button title="Edit message" onclick="editMessage(this.closest('li'))">
+                  <i class="fas fa-edit"></i>
+                </button>
+              `;
+              item.appendChild(actionsDiv);
             }
             if (data.color) {
               item.style.borderLeft = `4px solid ${data.color}`;
@@ -813,6 +1076,20 @@
         socket.on('users list', function(data) {
           onlineUsers = data;
           updateUserList();
+        });
+
+        socket.on('message edited', function(data) {
+          // Find and update the message in the DOM
+          const messages = messagesList.querySelectorAll('li');
+          messages.forEach(msg => {
+            const senderElement = msg.querySelector('.message-sender span');
+            if (senderElement && senderElement.textContent === data.sender) {
+              const messageContent = msg.querySelector('.message-bubble > div:first-child');
+              if (messageContent) {
+                messageContent.textContent = data.newText;
+              }
+            }
+          });
         });
 
         socket.on('connect', () => {

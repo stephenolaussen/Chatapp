@@ -133,6 +133,14 @@ admin.on('connection', (socket) => {
         });
     });
 
+    socket.on('edit message', (data) => {
+        // Broadcast edited message to all clients in the room
+        admin.in(data.room).emit('message edited', {
+            sender: data.sender,
+            newText: data.newText
+        });
+    });
+
     socket.on('disconnect', () => {
         // Remove user from all rooms
         for (const room in roomUsers) {
