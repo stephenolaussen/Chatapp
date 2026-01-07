@@ -68,13 +68,6 @@
         flex-shrink: 0;
       }
 
-      .game-btn {
-        flex-shrink: 0;
-        align-self: flex-end;
-        padding: 0 !important;
-        margin-bottom: 0.2rem;
-      }
-
       .online-users {
         display: flex;
         align-items: center;
@@ -881,13 +874,13 @@
     <div class="header">
       <div class="header-left">
         <a href="/" title="Back to home"><i class="fas fa-arrow-left"></i></a>
-        <button onclick="openGameModal()" class="game-btn" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem;" title="Play Flappy Bird">
-          🎮
-        </button>
         <h1>💬 Familie chat - <%- room %></h1>
         <button onclick="sendAlarm()" class="alarm-btn" title="Send alarm to all">🔔</button>
       </div>
       <div class="online-users">
+        <button onclick="openGameModal()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0;" title="Play Flappy Bird">
+          🎮
+        </button>
         <span class="online-count" id="userCount">1</span>
         <button onclick="toggleUserList()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0;" title="Online users">
           <i class="fas fa-users"></i>
