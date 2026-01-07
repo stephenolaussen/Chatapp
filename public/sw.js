@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1';
+const CACHE_NAME = 'familieskatt-v1-0-3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -25,7 +25,9 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
+          // Delete all old caches
           if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })

@@ -775,9 +775,28 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Register service worker
+        // Register service worker and check for updates
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            // Check for updates every 30 seconds
+            setInterval(() => {
+              registration.update().catch(err => console.log('Update check failed:', err));
+            }, 30000);
+
+            // Listen for service worker updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Show update prompt
+                  if (confirm('🔄 En ny versjon av appen er tilgjengelig! Vil du oppdatere nå?')) {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          }).catch(err => console.log('SW registration failed:', err));
         }
 
         const room = '<%-room%>';
@@ -1057,6 +1076,12 @@
           }
           
           messagesList.appendChild(item);
+          
+          // Send notification for new message (not for own messages)
+          if (typeof data === 'object' && data.text && data.sender !== currentUser.name) {
+            sendNotification(data.sender, data.text);
+          }
+          
           window.scrollTo(0, document.body.scrollHeight);
         });
 
@@ -1100,9 +1125,33 @@
           });
         });
 
+        // Request notification permission
+        function requestNotificationPermission() {
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+          }
+        }
+
+        // Send notification for new message
+        function sendNotification(sender, message) {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            // Don't show notification for own messages
+            if (sender === currentUser.name) return;
+            
+            new Notification(`💬 New message from ${sender}`, {
+              body: message.substring(0, 100),
+              icon: '/icons/favicon.svg',
+              badge: '/icons/favicon.svg',
+              tag: 'chat-message',
+              requireInteraction: false
+            });
+          }
+        }
+
         // Initialize on load
         initializeUser();
         updateUserDisplay();
+        requestNotificationPermission();
     </script>
   </body>
 </html>

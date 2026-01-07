@@ -28,10 +28,41 @@ app.get('/version', (req, res) => {
 
 let rooms = JSON.parse(fs.readFileSync('./rooms.json', 'utf-8'));
 
+// Helper function to get messages file path for a room
+function getMessagesFilePath(room) {
+    return path.join(__dirname, `room_messages_${room.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
+}
+
+// Helper function to load messages for a room
+function loadRoomMessages(room) {
+    try {
+        const filePath = getMessagesFilePath(room);
+        if (fs.existsSync(filePath)) {
+            return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        }
+    } catch(e) {
+        console.log(`Error loading messages for room ${room}:`, e);
+    }
+    return [];
+}
+
+// Helper function to save a message for a room
+function saveRoomMessage(room, message) {
+    try {
+        const filePath = getMessagesFilePath(room);
+        let messages = loadRoomMessages(room);
+        messages.push(message);
+        fs.writeFileSync(filePath, JSON.stringify(messages, null, 2));
+    } catch(e) {
+        console.log(`Error saving message for room ${room}:`, e);
+    }
+}
+
 // Create routes for all rooms from rooms.json
 rooms.forEach(room => {
     app.get('/' + encodeURIComponent(room), (req, res) => {
-        res.render('room', {room: room, messages: []});
+        const messages = loadRoomMessages(room);
+        res.render('room', {room: room, messages: messages});
     });
 });
 
@@ -43,7 +74,8 @@ app.post('/newroom', jsonParser, (req, res) => {
         
         // Create new route for this room
         app.get('/' + encodeURIComponent(room), (req, res) => {
-            res.render('room', {room: room, messages: []});
+            const messages = loadRoomMessages(room);
+            res.render('room', {room: room, messages: messages});
         });
         
         if(req.body.save) {
@@ -80,21 +112,19 @@ admin.on('connection', (socket) => {
             color: data.color || '#667eea'
         };
 
-        // Send previous messages for "Felles rom"
-        if(data.room === 'Felles rom') {
-            try {
-                const messages = JSON.parse(fs.readFileSync('./messages.json', 'utf-8'));
-                messages.forEach(msg => {
-                    socket.emit('chat message', {
-                        text: msg.text,
-                        sender: msg.sender || 'User',
-                        color: msg.color || '#667eea',
-                        timestamp: msg.timestamp
-                    });
+        // Send previous messages for all rooms
+        try {
+            const messages = loadRoomMessages(data.room);
+            messages.forEach(msg => {
+                socket.emit('chat message', {
+                    text: msg.text,
+                    sender: msg.sender || 'User',
+                    color: msg.color || '#667eea',
+                    timestamp: msg.timestamp
                 });
-            } catch(e) {
-                // File doesn't exist or is empty
-            }
+            });
+        } catch(e) {
+            // File doesn't exist or is empty
         }
 
         // Send updated user list to all in room
@@ -110,27 +140,18 @@ admin.on('connection', (socket) => {
     })
 
     socket.on('chat message', (data) => {
-        // Check if the message is from "Felles rom"
-        if(data.room === 'Felles rom') {
-            // Read current messages from messages.json
-            let messages = JSON.parse(fs.readFileSync('./messages.json', 'utf-8'));
-            // Add the new message to the array
-            const newMessages = messages.concat([{
-                text: data.msg,
-                sender: data.sender || 'User',
-                color: data.color || '#667eea',
-                timestamp: new Date()
-            }]);
-            // Write updated messages back to messages.json
-            fs.writeFileSync("./messages.json", JSON.stringify(newMessages));
-        }
-        // Emit the message to all clients in the room
-        admin.in(data.room).emit('chat message', {
+        // Save message for all rooms
+        const messageData = {
             text: data.msg,
             sender: data.sender || 'User',
             color: data.color || '#667eea',
             timestamp: new Date()
-        });
+        };
+        
+        saveRoomMessage(data.room, messageData);
+        
+        // Emit the message to all clients in the room
+        admin.in(data.room).emit('chat message', messageData);
     });
 
     socket.on('edit message', (data) => {

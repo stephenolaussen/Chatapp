@@ -300,9 +300,28 @@
     </div>
 
     <script>
-      // Register service worker
+      // Register service worker and check for updates
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          // Check for updates every 30 seconds
+          setInterval(() => {
+            registration.update().catch(err => console.log('Update check failed:', err));
+          }, 30000);
+
+          // Listen for service worker updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Show update prompt
+                if (confirm('🔄 En ny versjon av appen er tilgjengelig! Vil du oppdatere nå?')) {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  window.location.reload();
+                }
+              }
+            });
+          });
+        }).catch(err => console.log('SW registration failed:', err));
       }
 
       const form = document.getElementById('newRoomForm');
