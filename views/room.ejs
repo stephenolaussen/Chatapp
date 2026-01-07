@@ -874,6 +874,9 @@
     <div class="header">
       <div class="header-left">
         <a href="/" title="Back to home"><i class="fas fa-arrow-left"></i></a>
+        <button onclick="openGameModal()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0;" title="Play Flappy Bird">
+          🎮
+        </button>
         <h1>💬 Familie chat - <%- room %></h1>
         <button onclick="sendAlarm()" class="alarm-btn" title="Send alarm to all">🔔</button>
       </div>
@@ -881,9 +884,6 @@
         <span class="online-count" id="userCount">1</span>
         <button onclick="toggleUserList()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0;" title="Online users">
           <i class="fas fa-users"></i>
-        </button>
-        <button onclick="openGameModal()" style="background: none; border: none; cursor: pointer; color: #667eea; font-size: 1.2rem; padding: 0 0.5rem;" title="Play Flappy Bird">
-          🎮
         </button>
       </div>
       <div class="user-list" id="userList"></div>
@@ -1238,26 +1238,6 @@
 
         colorInput.addEventListener('change', updateColorSelection);
 
-        // Load previous messages
-        <% if (messages && messages.length > 0) { %>
-          <% messages.forEach(function(message) { %>
-            const item = document.createElement('li');
-            const sender = message.sender || 'User';
-            const color = message.color || '#667eea';
-            item.innerHTML = `
-              <div class="message-sender">
-                <span>${sender}</span>
-              </div>
-              <div class="message-bubble">
-                <div><%= message.text %></div>
-                <div class="message-time"><%= new Date(message.timestamp).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) %></div>
-              </div>
-            `;
-            item.style.setProperty('--message-color', color);
-            messagesList.appendChild(item);
-          <% }); %>
-        <% } %>
-
         // Emoji picker
         function toggleEmojiPicker() {
           const picker = document.getElementById('emojiPicker');
@@ -1597,8 +1577,8 @@
           gameRunning: false,
           pipeWidth: 60,
           pipeGap: 80,
-          gravity: 0.25,
-          jumpPower: -5
+          gravity: 0.12,
+          jumpPower: -3
         };
 
         function initGame() {
