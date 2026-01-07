@@ -625,13 +625,14 @@
         input, textarea, button {
           -webkit-user-select: text;
           user-select: text;
+          -webkit-touch-callout: default;
         }
 
         body {
           overflow: hidden;
-          height: 100vh;
-          position: fixed;
+          height: 100dvh;
           width: 100%;
+          position: relative;
         }
 
         #messages > li,
@@ -670,18 +671,25 @@
           gap: 0.5rem;
           flex-wrap: nowrap;
           flex-shrink: 0;
+          position: relative;
+          z-index: 10;
         }
 
         #form > button,
         .emoji-btn {
           flex-shrink: 0;
           white-space: nowrap;
+          pointer-events: auto;
         }
 
         #input {
           min-width: 0;
           padding: 0.7rem 1rem;
           font-size: 16px;
+          pointer-events: auto;
+          -webkit-appearance: none;
+          appearance: none;
+          border-radius: 8px;
         }
 
         .emoji-btn {
