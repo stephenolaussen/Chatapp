@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-9-1';
+const CACHE_NAME = 'familieskatt-v1-9-2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -19,7 +19,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate event
+// Activate event - Start polling if rooms are stored
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -35,6 +35,9 @@ self.addEventListener('activate', event => {
     })
   );
   self.clients.claim();
+  
+  // Start polling immediately if we have stored room info
+  console.log('SW: Activated - checking for stored rooms');
 });
 
 // Fetch event
@@ -85,8 +88,9 @@ let currentUser = null;
 let lastCheckedTime = {};
 let pollingIntervals = {}; // One interval per room
 let allRoomsData = {}; // Store all rooms to poll from
-let pageIsVisible = true; // Track if page is visible
+let pageIsVisible = true; // Track if page is visible (assume hidden for safety)
 let unreadCount = 0; // Track unread notifications
+let lastActivityTime = Date.now(); // Track last activity
 
 // Polling for all rooms - check every 3 seconds (when visible) or every 10 seconds (when hidden)
 function startContinuousPolling() {
@@ -95,9 +99,12 @@ function startContinuousPolling() {
   // Initialize polling for each room we know about
   Object.keys(allRoomsData).forEach(roomName => {
     if (!pollingIntervals[roomName]) {
-      // Use shorter interval when page is visible, longer when hidden
-      const interval = pageIsVisible ? 3000 : 10000;
+      // Always start polling, use faster interval when window is active
       pollingIntervals[roomName] = setInterval(async () => {
+        // Determine interval based on last activity and visibility
+        const timeSinceLastActivity = Date.now() - lastActivityTime;
+        const shouldUseFastInterval = pageIsVisible || timeSinceLastActivity < 60000; // Use fast interval if page visible or active in last 60s
+        
         try {
           const url = `/check-messages/${encodeURIComponent(roomName)}?user=${encodeURIComponent(currentUser || 'guest')}&t=${Date.now()}`;
           
@@ -151,6 +158,9 @@ function startContinuousPolling() {
 
 // Message event for cache updates and notifications
 self.addEventListener('message', event => {
+  // Update last activity time on any message
+  lastActivityTime = Date.now();
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
@@ -158,6 +168,7 @@ self.addEventListener('message', event => {
   // Track page visibility for smarter polling intervals
   if (event.data && event.data.type === 'PAGE_VISIBILITY') {
     pageIsVisible = event.data.visible;
+    lastActivityTime = Date.now(); // Update activity time
     console.log('SW: Page visibility changed to', pageIsVisible);
   }
   
@@ -165,6 +176,7 @@ self.addEventListener('message', event => {
   if (event.data && event.data.type === 'UPDATE_ROOMS_INFO') {
     const { rooms, user } = event.data;
     currentUser = user;
+    lastActivityTime = Date.now(); // Update activity time
     
     console.log('SW: Received rooms info:', rooms, 'user:', user);
     

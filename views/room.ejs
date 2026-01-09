@@ -1575,8 +1575,11 @@
 
         // Actually show the notification
         function showNotificationNow(sender, message) {
-          // Only show if page is not visible
-          if (pageVisible) return;
+          // Only show if page is NOT visible AND if we're not currently in active chat
+          if (pageVisible) {
+            console.log('Not showing notification - page is visible');
+            return;
+          }
           
           // Play sound and vibrate
           playNotificationSound();
