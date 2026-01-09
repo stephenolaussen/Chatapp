@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-7-8';
+const CACHE_NAME = 'familieskatt-v1-7-9';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -82,82 +82,61 @@ self.addEventListener('fetch', event => {
 // Store current room and user info for background notifications
 let currentRoom = null;
 let currentUser = null;
-let currentPageVisible = true;
 let lastCheckedTime = {};
-let pollingInterval = null;
+let pollingIntervals = {}; // One interval per room
+let allRoomsData = {}; // Store all rooms to poll from
 
-// Aggressive polling - check every 3 seconds
-function startAggressivePolling() {
-  // Stop existing polling first
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-  }
+// Polling for all rooms - check every 3 seconds
+function startContinuousPolling() {
+  console.log('SW: Starting continuous polling for all rooms');
   
-  if (!currentRoom || !currentUser) {
-    console.log('SW: Cannot start polling, missing room or user', { currentRoom, currentUser });
-    return;
-  }
-  
-  console.log('SW: Starting aggressive polling for room:', currentRoom, 'user:', currentUser);
-  
-  // Initialize last checked time for this room
-  if (!lastCheckedTime[currentRoom]) {
-    lastCheckedTime[currentRoom] = Date.now() - 5000; // Look back 5 seconds to catch recent messages
-  }
-  
-  // Check for new messages every 3 seconds (more aggressive)
-  pollingInterval = setInterval(async () => {
-    if (!currentRoom || !currentUser) {
-      console.log('SW: Stopping polling - missing room or user');
-      clearInterval(pollingInterval);
-      pollingInterval = null;
-      return;
-    }
-    
-    try {
-      const url = `/check-messages/${encodeURIComponent(currentRoom)}?user=${encodeURIComponent(currentUser)}&t=${Date.now()}`;
-      console.log('SW: Polling...', url);
-      
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('SW: Got response:', data);
-        
-        if (data.messages && data.messages.length > 0) {
-          console.log('SW: Found', data.messages.length, 'messages');
+  // Initialize polling for each room we know about
+  Object.keys(allRoomsData).forEach(roomName => {
+    if (!pollingIntervals[roomName]) {
+      pollingIntervals[roomName] = setInterval(async () => {
+        try {
+          const url = `/check-messages/${encodeURIComponent(roomName)}?user=${encodeURIComponent(currentUser || 'guest')}&t=${Date.now()}`;
           
-          // Only show notifications for messages newer than last check
-          const nowTime = Date.now();
-          data.messages.forEach(msg => {
-            const msgTime = new Date(msg.timestamp).getTime();
-            console.log('SW: Checking message from', msg.sender, 'time:', msgTime, 'lastChecked:', lastCheckedTime[currentRoom]);
+          const response = await fetch(url);
+          
+          if (response.ok) {
+            const data = await response.json();
             
-            // Only show if message is newer than last check time AND not from current user
-            if (msgTime > lastCheckedTime[currentRoom] && msg.sender !== currentUser) {
-              console.log('SW: Showing notification for:', msg.sender);
-              self.registration.showNotification(`💬 ${msg.sender}`, {
-                body: msg.text.substring(0, 100),
-                icon: '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
-                tag: `chat-${Date.now()}`,
-                requireInteraction: false
-              }).catch(err => console.log('SW: Notification error:', err));
+            if (data.messages && data.messages.length > 0) {
+              // Initialize last checked time for this room if not exists
+              if (!lastCheckedTime[roomName]) {
+                lastCheckedTime[roomName] = Date.now() - 5000;
+              }
+              
+              // Show notifications for messages newer than last check
+              const nowTime = Date.now();
+              data.messages.forEach(msg => {
+                const msgTime = new Date(msg.timestamp).getTime();
+                
+                // Only show if message is newer than last check time AND not from current user
+                if (msgTime > lastCheckedTime[roomName] && msg.sender !== currentUser) {
+                  console.log('SW: Showing notification from', msg.sender, 'in room', roomName);
+                  self.registration.showNotification(`💬 ${msg.sender}`, {
+                    body: msg.text.substring(0, 100),
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/icon-192.png',
+                    tag: `chat-${roomName}-${Date.now()}`,
+                    requireInteraction: false,
+                    data: { room: roomName }
+                  }).catch(err => console.log('SW: Notification error:', err));
+                }
+              });
+              
+              // Update last checked time
+              lastCheckedTime[roomName] = nowTime;
             }
-          });
-          
-          // Update last checked time
-          lastCheckedTime[currentRoom] = nowTime;
-        } else {
-          console.log('SW: No new messages');
+          }
+        } catch (e) {
+          console.log('SW: Polling error for room', roomName, ':', e);
         }
-      } else {
-        console.log('SW: Response not OK:', response.status);
-      }
-    } catch (e) {
-      console.log('SW: Polling error:', e);
+      }, 3000); // Check every 3 seconds
     }
-  }, 3000); // Check every 3 seconds
+  });
 }
 
 
@@ -167,23 +146,40 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
   
-  // Track page visibility state
-  if (event.data && event.data.type === 'PAGE_VISIBILITY') {
-    currentPageVisible = event.data.visible;
+  // Store all rooms info for background polling
+  if (event.data && event.data.type === 'UPDATE_ROOMS_INFO') {
+    const { rooms, user } = event.data;
+    currentUser = user;
     
-    // Start aggressive polling when page becomes hidden
-    if (!currentPageVisible) {
-      startAggressivePolling();
+    console.log('SW: Received rooms info:', rooms, 'user:', user);
+    
+    // Initialize polling for all rooms
+    if (rooms && rooms.length > 0) {
+      rooms.forEach(roomName => {
+        allRoomsData[roomName] = true;
+        // Initialize last checked time for this room if not exists
+        if (!lastCheckedTime[roomName]) {
+          lastCheckedTime[roomName] = Date.now() - 5000; // Look back 5 seconds
+        }
+      });
+      
+      // Start continuous polling across all rooms
+      startContinuousPolling();
     }
   }
   
-  // Store current room and user for background message handling
+  // Legacy: Store current room and user for background message handling
   if (event.data && event.data.type === 'UPDATE_ROOM_INFO') {
     currentRoom = event.data.room;
     currentUser = event.data.user;
     
-    // Always start polling in background
-    startAggressivePolling();
+    console.log('SW: Updated room/user info:', { currentRoom, currentUser });
+    
+    // Add to rooms to poll if not already there
+    if (currentRoom && !allRoomsData[currentRoom]) {
+      allRoomsData[currentRoom] = true;
+      startContinuousPolling();
+    }
   }
   
   // Handle notification from main thread
@@ -217,17 +213,29 @@ self.addEventListener('message', event => {
 // Notification click handler
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  
+  // Get the room from notification data if available
+  const room = event.notification.data && event.notification.data.room;
+  
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then(clientList => {
       // Focus existing window if open
       for (let i = 0; i < clientList.length; i++) {
-        if (clientList[i].url === '/' && 'focus' in clientList[i]) {
+        if (room && clientList[i].url.includes(encodeURIComponent(room))) {
+          // If room specified and window with that room is open, focus it
+          return clientList[i].focus();
+        } else if (!room && (clientList[i].url === '/' || clientList[i].url.includes('/room'))) {
+          // No room specified, focus any chat window
           return clientList[i].focus();
         }
       }
       // Open new window if not open
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        if (room) {
+          return clients.openWindow('/' + encodeURIComponent(room));
+        } else {
+          return clients.openWindow('/');
+        }
       }
     })
   );

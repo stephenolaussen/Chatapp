@@ -1217,7 +1217,20 @@
           userInfo.style.setProperty('--user-color', currentUser.color);
           document.documentElement.style.setProperty('--user-color', currentUser.color);
           
-          // Update Service Worker with current user and room info
+          // Fetch all available rooms and send to Service Worker
+          fetch('/api/rooms').then(response => response.json()).then(data => {
+            if (data.success && data.rooms && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              // Send all available rooms to service worker for background polling
+              // Service Worker will now notify user for messages in ANY room, even when app is closed
+              navigator.serviceWorker.controller.postMessage({
+                type: 'UPDATE_ROOMS_INFO',
+                rooms: data.rooms,
+                user: currentUser.name
+              });
+            }
+          }).catch(err => console.log('Failed to fetch rooms for SW:', err));
+          
+          // Legacy: Also send individual room update for backward compatibility
           if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({
               type: 'UPDATE_ROOM_INFO',

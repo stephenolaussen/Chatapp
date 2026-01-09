@@ -27,6 +27,22 @@ app.get('/version', (req, res) => {
     res.json({ version: pkg.version });
 });
 
+// API endpoint to get all available rooms (for Service Worker background notifications)
+app.get('/api/rooms', (req, res) => {
+    try {
+        const roomNames = rooms.map(r => typeof r === 'string' ? r : r.name);
+        res.json({
+            success: true,
+            rooms: roomNames
+        });
+    } catch (e) {
+        res.json({
+            success: false,
+            rooms: []
+        });
+    }
+});
+
 // Track last message timestamp per room for notifications
 const lastMessageTime = {};
 
