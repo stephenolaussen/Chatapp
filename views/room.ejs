@@ -1341,8 +1341,16 @@
         socket.on('chat message', function(data) {
           const item = document.createElement('li');
           
+          // Check if it's a system message (like highscore)
+          if (typeof data === 'object' && data.isSystemMessage) {
+            item.classList.add('system-message');
+            item.style.color = data.color || '#FFD700';
+            item.style.fontWeight = 'bold';
+            item.style.fontSize = '1.1rem';
+            item.textContent = data.text || data.msg;
+          }
           // Check if it's a message object or plain text
-          if (typeof data === 'object' && data.text) {
+          else if (typeof data === 'object' && data.text) {
             item.innerHTML = `
               <div class="message-sender">
                 <span>${data.sender || 'User'}</span>
@@ -1375,8 +1383,8 @@
           
           messagesList.appendChild(item);
           
-          // Send notification for new message (not for own messages)
-          if (typeof data === 'object' && data.text && data.sender !== currentUser.name) {
+          // Send notification for new message (not for own messages and not for system messages)
+          if (typeof data === 'object' && data.text && data.sender !== currentUser.name && !data.isSystemMessage) {
             sendNotification(data.sender, data.text);
           }
           
@@ -1693,14 +1701,15 @@
             localStorage.setItem('flappyHighscore', gameState.highscore);
             document.getElementById('gameHighscore').textContent = gameState.highscore;
             
-            // Send highscore to chat
-            const newHighscoreMsg = document.createElement('li');
-            newHighscoreMsg.classList.add('system-message');
-            newHighscoreMsg.style.color = '#FFD700';
-            newHighscoreMsg.style.fontWeight = 'bold';
-            newHighscoreMsg.style.fontSize = '1.1rem';
-            newHighscoreMsg.textContent = `🏆 ${currentUser.name} got a new Flappy Bird highscore: ${gameState.score}!`;
-            messagesList.appendChild(newHighscoreMsg);
+            // Send highscore to all users via Socket.io
+            const highscoreMessage = `🏆 ${currentUser.name} got a new Flappy Bird highscore: ${gameState.score}!`;
+            socket.emit('chat message', { 
+              msg: highscoreMessage, 
+              room,
+              sender: 'Game',
+              color: '#FFD700',
+              isSystemMessage: true
+            });
           }
         }
 

@@ -182,18 +182,30 @@ admin.on('connection', (socket) => {
     })
 
     socket.on('chat message', (data) => {
-        // Save message for all rooms
-        const messageData = {
-            text: data.msg,
-            sender: data.sender || 'User',
-            color: data.color || '#667eea',
-            timestamp: new Date()
-        };
-        
-        saveRoomMessage(data.room, messageData);
-        
-        // Emit the message to all clients in the room
-        admin.in(data.room).emit('chat message', messageData);
+        // Handle system messages (like highscores)
+        if (data.isSystemMessage) {
+            // Don't save system messages to file, just broadcast them
+            admin.in(data.room).emit('chat message', {
+                text: data.msg,
+                sender: data.sender || 'System',
+                color: data.color || '#FFD700',
+                isSystemMessage: true,
+                timestamp: new Date()
+            });
+        } else {
+            // Save regular message for all rooms
+            const messageData = {
+                text: data.msg,
+                sender: data.sender || 'User',
+                color: data.color || '#667eea',
+                timestamp: new Date()
+            };
+            
+            saveRoomMessage(data.room, messageData);
+            
+            // Emit the message to all clients in the room
+            admin.in(data.room).emit('chat message', messageData);
+        }
     });
 
     socket.on('edit message', (data) => {
