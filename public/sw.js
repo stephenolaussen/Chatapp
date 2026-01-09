@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-6-17';
+const CACHE_NAME = 'familieskatt-v1-6-18';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -79,6 +79,11 @@ self.addEventListener('fetch', event => {
   );
 });
 
+// Store current room and user info for background notifications
+let currentRoom = null;
+let currentUser = null;
+let currentPageVisible = true;
+
 // Message event for cache updates and notifications
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
@@ -87,7 +92,13 @@ self.addEventListener('message', event => {
   
   // Track page visibility state
   if (event.data && event.data.type === 'PAGE_VISIBILITY') {
-    self.pageVisible = event.data.visible;
+    currentPageVisible = event.data.visible;
+  }
+  
+  // Store current room and user for background message handling
+  if (event.data && event.data.type === 'UPDATE_ROOM_INFO') {
+    currentRoom = event.data.room;
+    currentUser = event.data.user;
   }
   
   // Handle notification from main thread
@@ -101,6 +112,20 @@ self.addEventListener('message', event => {
     const { title, options } = event.data;
     // Always show alarm even if page is visible
     self.registration.showNotification(title, options);
+  }
+  
+  // Handle background message notification
+  if (event.data && event.data.type === 'BG_MESSAGE_NOTIFICATION') {
+    const { sender, message } = event.data;
+    if (sender !== currentUser) {
+      self.registration.showNotification(`💬 ${sender}`, {
+        body: message.substring(0, 100),
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        tag: `chat-message-${Date.now()}`,
+        requireInteraction: false
+      });
+    }
   }
 });
 

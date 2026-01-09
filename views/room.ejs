@@ -1216,6 +1216,15 @@
           userName.textContent = currentUser.name;
           userInfo.style.setProperty('--user-color', currentUser.color);
           document.documentElement.style.setProperty('--user-color', currentUser.color);
+          
+          // Update Service Worker with current user and room info
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'UPDATE_ROOM_INFO',
+              room: room,
+              user: currentUser.name
+            });
+          }
         }
 
         // Color selection
@@ -1418,6 +1427,11 @@
             name: currentUser.name,
             color: currentUser.color
           });
+          
+          // Scroll to bottom after loading initial messages
+          setTimeout(() => {
+            window.scrollTo(0, document.body.scrollHeight);
+          }, 100);
         });
 
         socket.on('connect_error', (error) => {
@@ -1457,9 +1471,6 @@
             // Don't show notification for own messages
             if (sender === currentUser.name) return;
             
-            // Don't show notification if page is visible (user can already see it)
-            if (pageVisible) return;
-            
             // Store the latest notification
             pendingNotification = { sender, message };
             
@@ -1482,7 +1493,10 @@
 
         // Actually show the notification
         function showNotificationNow(sender, message) {
-          // Try to use Service Worker for notifications (better on mobile)
+          // Only show if page is not visible
+          if (pageVisible) return;
+          
+          // Try to use Service Worker for notifications (better on mobile and works when page is closed)
           if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({
               type: 'SHOW_NOTIFICATION',
@@ -1497,7 +1511,7 @@
             });
           } else {
             // Fallback to regular Notification API
-            new Notification(`💬 New message from ${sender}`, {
+            new Notification(`💬 ${sender}`, {
               body: message.substring(0, 100),
               icon: '/icons/favicon.svg',
               badge: '/icons/favicon.svg',
