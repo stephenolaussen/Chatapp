@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-9-2';
+const CACHE_NAME = 'familieskatt-v1-9-3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -163,6 +163,12 @@ self.addEventListener('message', event => {
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Handle heartbeat to keep SW alive
+  if (event.data && event.data.type === 'HEARTBEAT') {
+    console.log('SW: Received heartbeat from client');
+    // Just receiving the heartbeat keeps the SW alive
   }
   
   // Track page visibility for smarter polling intervals

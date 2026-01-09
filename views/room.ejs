@@ -1396,8 +1396,8 @@
           
           messagesList.appendChild(item);
           
-          // Send notification for new message (not for own messages and not for system messages)
-          if (typeof data === 'object' && data.text && data.sender !== currentUser.name && !data.isSystemMessage) {
+          // Send notification for new message (only if page is NOT visible)
+          if (typeof data === 'object' && data.text && data.sender !== currentUser.name && !data.isSystemMessage && !pageVisible) {
             sendNotification(data.sender, data.text);
           }
           
@@ -1498,6 +1498,18 @@
           if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
           }
+        }
+
+        // Keep Service Worker alive with periodic heartbeat (prevents SW termination)
+        if ('serviceWorker' in navigator) {
+          setInterval(() => {
+            if (navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({
+                type: 'HEARTBEAT',
+                timestamp: Date.now()
+              });
+            }
+          }, 30000); // Every 30 seconds
         }
 
         // Play notification sound
