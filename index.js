@@ -20,9 +20,6 @@ let webPushEnabled = false;
 const vapidPublic = process.env.VAPID_PUBLIC_KEY || '';
 const vapidPrivate = process.env.VAPID_PRIVATE_KEY || '';
 
-console.log(`Debug: VAPID_PUBLIC_KEY length = ${vapidPublic.length}`);
-console.log(`Debug: VAPID_PRIVATE_KEY length = ${vapidPrivate.length}`);
-
 if (vapidPublic && vapidPrivate) {
     try {
         webpush.setVapidDetails(
