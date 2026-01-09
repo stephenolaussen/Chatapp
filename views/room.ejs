@@ -1470,14 +1470,28 @@
         // Track page visibility
         document.addEventListener('visibilitychange', () => {
           pageVisible = document.visibilityState === 'visible';
-          // Tell service worker about visibility state
+          // Tell service worker about visibility state (for smarter polling)
           if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({
               type: 'PAGE_VISIBILITY',
               visible: pageVisible
             });
           }
+          
+          // Clear badge when page becomes visible
+          if (pageVisible && 'clearAppBadge' in navigator) {
+            try {
+              navigator.clearAppBadge();
+            } catch(e) {}
+          }
         });
+        
+        // Also clear badge when page initially loads
+        if ('clearAppBadge' in navigator && document.visibilityState === 'visible') {
+          try {
+            navigator.clearAppBadge();
+          } catch(e) {}
+        }
 
         // Request notification permission
         function requestNotificationPermission() {

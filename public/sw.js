@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-8-0';
+const CACHE_NAME = 'familieskatt-v1-9-0';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -85,14 +85,67 @@ let currentUser = null;
 let lastCheckedTime = {};
 let pollingIntervals = {}; // One interval per room
 let allRoomsData = {}; // Store all rooms to poll from
+let pageIsVisible = true; // Track if page is visible
+let unreadCount = 0; // Track unread notifications
 
-// Polling for all rooms - check every 3 seconds
+// Generate notification sound using Web Audio API
+function playNotificationSound() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Double beep: high then low
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  } catch(e) {
+    console.log('Could not play sound:', e);
+  }
+}
+
+// Vibrate device (with fallback)
+function vibrateDevice() {
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate([200, 100, 200]); // Pattern: 200ms vibrate, 100ms pause, 200ms vibrate
+    } catch(e) {
+      console.log('Vibration failed:', e);
+    }
+  }
+}
+
+// Update badge count
+function updateBadge(count) {
+  if ('setAppBadge' in navigator) {
+    try {
+      if (count > 0) {
+        navigator.setAppBadge(count);
+      } else {
+        navigator.clearAppBadge();
+      }
+    } catch(e) {
+      console.log('Badge update failed:', e);
+    }
+  }
+}
+
+// Polling for all rooms - check every 3 seconds (when visible) or every 10 seconds (when hidden)
 function startContinuousPolling() {
   console.log('SW: Starting continuous polling for all rooms');
   
   // Initialize polling for each room we know about
   Object.keys(allRoomsData).forEach(roomName => {
     if (!pollingIntervals[roomName]) {
+      // Use shorter interval when page is visible, longer when hidden
+      const interval = pageIsVisible ? 3000 : 10000;
       pollingIntervals[roomName] = setInterval(async () => {
         try {
           const url = `/check-messages/${encodeURIComponent(roomName)}?user=${encodeURIComponent(currentUser || 'guest')}&t=${Date.now()}`;
@@ -116,6 +169,15 @@ function startContinuousPolling() {
                 // Only show if message is newer than last check time AND not from current user
                 if (msgTime > lastCheckedTime[roomName] && msg.sender !== currentUser) {
                   console.log('SW: Showing notification from', msg.sender, 'in room', roomName);
+                  
+                  // Play sound and vibrate
+                  playNotificationSound();
+                  vibrateDevice();
+                  
+                  // Increment unread count
+                  unreadCount++;
+                  updateBadge(unreadCount);
+                  
                   self.registration.showNotification(`💬 ${msg.sender}`, {
                     body: msg.text.substring(0, 100),
                     icon: '/icons/icon-192.png',
@@ -144,6 +206,12 @@ function startContinuousPolling() {
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Track page visibility for smarter polling intervals
+  if (event.data && event.data.type === 'PAGE_VISIBILITY') {
+    pageIsVisible = event.data.visible;
+    console.log('SW: Page visibility changed to', pageIsVisible);
   }
   
   // Store all rooms info for background polling
@@ -213,6 +281,12 @@ self.addEventListener('message', event => {
 // Notification click handler
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  
+  // Decrement unread count
+  if (unreadCount > 0) {
+    unreadCount--;
+    updateBadge(unreadCount);
+  }
   
   // Get the room from notification data if available
   const room = event.notification.data && event.notification.data.room;
