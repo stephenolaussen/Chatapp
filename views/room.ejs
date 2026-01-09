@@ -1519,7 +1519,12 @@
             
             // Get VAPID public key from server
             const keyResponse = await fetch('/vapid-public-key');
-            const { publicKey } = await keyResponse.json();
+            const { publicKey, enabled } = await keyResponse.json();
+            
+            if (!enabled || !publicKey) {
+              console.log('Web Push not enabled on server');
+              return;
+            }
             
             // Convert VAPID key to Uint8Array
             function urlBase64ToUint8Array(base64String) {

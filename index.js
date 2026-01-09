@@ -15,12 +15,24 @@ const webpush = require('web-push');
 const MONGODB_URI = process.env.MONGODB_URI;
 let mongoConnected = false;
 
-// Set up Web Push API
-webpush.setVapidDetails(
-    'mailto:example@example.com',
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-);
+// Set up Web Push API (optional - only if VAPID keys are configured)
+let webPushEnabled = false;
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    try {
+        webpush.setVapidDetails(
+            'mailto:example@example.com',
+            process.env.VAPID_PUBLIC_KEY,
+            process.env.VAPID_PRIVATE_KEY
+        );
+        webPushEnabled = true;
+        console.log('✅ Web Push API enabled');
+    } catch (err) {
+        console.warn('⚠️ Web Push setup failed:', err.message);
+        webPushEnabled = false;
+    }
+} else {
+    console.warn('⚠️ VAPID keys not configured - Web Push disabled');
+}
 
 if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI).then(() => {
@@ -81,7 +93,10 @@ app.get('/version', (req, res) => {
 
 // Get VAPID public key endpoint
 app.get('/vapid-public-key', (req, res) => {
-    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+    if (!webPushEnabled) {
+        return res.json({ publicKey: null, enabled: false });
+    }
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY, enabled: true });
 });
 
 // Subscribe to push notifications
@@ -122,6 +137,10 @@ app.post('/subscribe', jsonParser, async (req, res) => {
 
 // Helper to send push notifications to all subscribers
 async function sendPushNotificationToAll(title, options) {
+    if (!webPushEnabled) {
+        return; // Skip if Web Push not enabled
+    }
+    
     try {
         let subscriptions = [];
         
