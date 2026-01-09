@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-7-6';
+const CACHE_NAME = 'familieskatt-v1-7-7';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -83,49 +83,61 @@ self.addEventListener('fetch', event => {
 let currentRoom = null;
 let currentUser = null;
 let currentPageVisible = true;
-let pollingInterval = null;
+let lastCheckedTime = {};
 
-// Polling function to check for new messages every 5 seconds
-function startPolling() {
-  if (pollingInterval || !currentRoom || !currentUser) {
+// Aggressive polling - check every 3 seconds
+function startAggressivePolling() {
+  if (!currentRoom || !currentUser) {
     return;
   }
   
-  // Check for new messages every 5 seconds
-  pollingInterval = setInterval(async () => {
+  // Initialize last checked time for this room
+  if (!lastCheckedTime[currentRoom]) {
+    lastCheckedTime[currentRoom] = Date.now();
+  }
+  
+  // Check for new messages every 3 seconds (more aggressive)
+  const pollingId = setInterval(async () => {
+    if (!currentRoom || !currentUser) {
+      clearInterval(pollingId);
+      return;
+    }
+    
     try {
-      const response = await fetch(`/check-messages/${encodeURIComponent(currentRoom)}?user=${encodeURIComponent(currentUser)}`);
+      const response = await fetch(`/check-messages/${encodeURIComponent(currentRoom)}?user=${encodeURIComponent(currentUser)}&t=${Date.now()}`);
       
       if (response.ok) {
         const data = await response.json();
         
         if (data.messages && data.messages.length > 0) {
+          // Only show notifications for messages newer than last check
+          const nowTime = Date.now();
           data.messages.forEach(msg => {
-            // Only show notifications for messages from other users
-            if (msg.sender !== currentUser) {
+            const msgTime = new Date(msg.timestamp).getTime();
+            
+            // Only show if message is newer than last check time AND not from current user
+            if (msgTime > lastCheckedTime[currentRoom] && msg.sender !== currentUser) {
               self.registration.showNotification(`💬 ${msg.sender}`, {
                 body: msg.text.substring(0, 100),
                 icon: '/icons/icon-192.png',
                 badge: '/icons/icon-192.png',
-                tag: `chat-message-${msg.timestamp}`,
+                tag: `chat-${Date.now()}`,
                 requireInteraction: false
-              });
+              }).catch(err => console.log('Notification error:', err));
             }
           });
+          
+          // Update last checked time
+          lastCheckedTime[currentRoom] = nowTime;
         }
       }
     } catch (e) {
-      console.log('Polling error:', e);
+      // Silently fail, will retry next interval
     }
-  }, 5000); // Check every 5 seconds
-}
-
-// Stop polling
-function stopPolling() {
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-    pollingInterval = null;
-  }
+  }, 3000); // Check every 3 seconds
+  
+  // Keep polling even if this function is called again
+  return pollingId;
 }
 
 
@@ -138,19 +150,20 @@ self.addEventListener('message', event => {
   // Track page visibility state
   if (event.data && event.data.type === 'PAGE_VISIBILITY') {
     currentPageVisible = event.data.visible;
+    
+    // Start aggressive polling when page becomes hidden
+    if (!currentPageVisible) {
+      startAggressivePolling();
+    }
   }
   
   // Store current room and user for background message handling
   if (event.data && event.data.type === 'UPDATE_ROOM_INFO') {
-    const oldRoom = currentRoom;
     currentRoom = event.data.room;
     currentUser = event.data.user;
     
-    // Start/restart polling if room changed
-    if (oldRoom !== currentRoom) {
-      stopPolling();
-      startPolling();
-    }
+    // Always start polling in background
+    startAggressivePolling();
   }
   
   // Handle notification from main thread
