@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-7-4';
+const CACHE_NAME = 'familieskatt-v1-7-5';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -83,62 +83,51 @@ self.addEventListener('fetch', event => {
 let currentRoom = null;
 let currentUser = null;
 let currentPageVisible = true;
-let eventSourceConnection = null;
+let pollingInterval = null;
 
-// Start listening to message notifications via SSE
-function startSSEListener() {
-  if (currentRoom && !eventSourceConnection) {
+// Polling function to check for new messages every 5 seconds
+function startPolling() {
+  if (pollingInterval || !currentRoom || !currentUser) {
+    return;
+  }
+  
+  // Check for new messages every 5 seconds
+  pollingInterval = setInterval(async () => {
     try {
-      eventSourceConnection = new EventSource(`/notify/${encodeURIComponent(currentRoom)}`);
+      const response = await fetch(`/check-messages/${encodeURIComponent(currentRoom)}?user=${encodeURIComponent(currentUser)}`);
       
-      eventSourceConnection.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          // Broadcast to all clients
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({
-                type: 'NOTIFICATION',
-                data: data
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach(msg => {
+            // Only show notifications for messages from other users
+            if (msg.sender !== currentUser) {
+              self.registration.showNotification(`💬 ${msg.sender}`, {
+                body: msg.text.substring(0, 100),
+                icon: '/icons/icon-192.png',
+                badge: '/icons/icon-192.png',
+                tag: `chat-message-${msg.timestamp}`,
+                requireInteraction: false
               });
-            });
+            }
           });
-          
-          // Show notification if it's not a keepalive
-          if (data.type && data.sender !== currentUser) {
-            self.registration.showNotification(`💬 ${data.sender}`, {
-              body: data.text.substring(0, 100),
-              icon: '/icons/icon-192.png',
-              badge: '/icons/icon-192.png',
-              tag: `chat-message-${Date.now()}`,
-              requireInteraction: false
-            });
-          }
-        } catch (e) {
-          // Ignore keepalive messages and parse errors
         }
-      };
-      
-      eventSourceConnection.onerror = () => {
-        if (eventSourceConnection) {
-          eventSourceConnection.close();
-          eventSourceConnection = null;
-        }
-      };
+      }
     } catch (e) {
-      console.log('SSE connection error:', e);
+      console.log('Polling error:', e);
     }
+  }, 5000); // Check every 5 seconds
+}
+
+// Stop polling
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
   }
 }
 
-// Stop SSE listener
-function stopSSEListener() {
-  if (eventSourceConnection) {
-    eventSourceConnection.close();
-    eventSourceConnection = null;
-  }
-}
 
 // Message event for cache updates and notifications
 self.addEventListener('message', event => {
@@ -157,10 +146,10 @@ self.addEventListener('message', event => {
     currentRoom = event.data.room;
     currentUser = event.data.user;
     
-    // Start/restart SSE listener if room changed
+    // Start/restart polling if room changed
     if (oldRoom !== currentRoom) {
-      stopSSEListener();
-      startSSEListener();
+      stopPolling();
+      startPolling();
     }
   }
   
