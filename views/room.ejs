@@ -1401,8 +1401,14 @@
             sendNotification(data.sender, data.text);
           }
           
-          window.scrollTo(0, document.body.scrollHeight);
+          // Scroll to bottom
+          scrollToBottom();
         });
+
+        // Scroll messages to bottom
+        function scrollToBottom() {
+          messagesList.scrollTop = messagesList.scrollHeight;
+        }
 
         socket.on('user joined', function(data) {
           onlineUsers[data.socketId] = {
@@ -1451,7 +1457,7 @@
           
           // Scroll to bottom after loading initial messages
           setTimeout(() => {
-            window.scrollTo(0, document.body.scrollHeight);
+            scrollToBottom();
           }, 100);
         });
 
