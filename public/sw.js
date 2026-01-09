@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-9-0';
+const CACHE_NAME = 'familieskatt-v1-9-1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -88,55 +88,6 @@ let allRoomsData = {}; // Store all rooms to poll from
 let pageIsVisible = true; // Track if page is visible
 let unreadCount = 0; // Track unread notifications
 
-// Generate notification sound using Web Audio API
-function playNotificationSound() {
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Double beep: high then low
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.2);
-  } catch(e) {
-    console.log('Could not play sound:', e);
-  }
-}
-
-// Vibrate device (with fallback)
-function vibrateDevice() {
-  if ('vibrate' in navigator) {
-    try {
-      navigator.vibrate([200, 100, 200]); // Pattern: 200ms vibrate, 100ms pause, 200ms vibrate
-    } catch(e) {
-      console.log('Vibration failed:', e);
-    }
-  }
-}
-
-// Update badge count
-function updateBadge(count) {
-  if ('setAppBadge' in navigator) {
-    try {
-      if (count > 0) {
-        navigator.setAppBadge(count);
-      } else {
-        navigator.clearAppBadge();
-      }
-    } catch(e) {
-      console.log('Badge update failed:', e);
-    }
-  }
-}
-
 // Polling for all rooms - check every 3 seconds (when visible) or every 10 seconds (when hidden)
 function startContinuousPolling() {
   console.log('SW: Starting continuous polling for all rooms');
@@ -170,13 +121,8 @@ function startContinuousPolling() {
                 if (msgTime > lastCheckedTime[roomName] && msg.sender !== currentUser) {
                   console.log('SW: Showing notification from', msg.sender, 'in room', roomName);
                   
-                  // Play sound and vibrate
-                  playNotificationSound();
-                  vibrateDevice();
-                  
                   // Increment unread count
                   unreadCount++;
-                  updateBadge(unreadCount);
                   
                   self.registration.showNotification(`💬 ${msg.sender}`, {
                     body: msg.text.substring(0, 100),
@@ -184,7 +130,8 @@ function startContinuousPolling() {
                     badge: '/icons/icon-192.png',
                     tag: `chat-${roomName}-${Date.now()}`,
                     requireInteraction: false,
-                    data: { room: roomName }
+                    data: { room: roomName },
+                    vibrate: [200, 100, 200] // Vibration pattern
                   }).catch(err => console.log('SW: Notification error:', err));
                 }
               });
@@ -285,7 +232,6 @@ self.addEventListener('notificationclick', event => {
   // Decrement unread count
   if (unreadCount > 0) {
     unreadCount--;
-    updateBadge(unreadCount);
   }
   
   // Get the room from notification data if available
