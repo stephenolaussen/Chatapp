@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const http = require('http');
@@ -6,6 +7,33 @@ const { Server } = require("socket.io");
 const io = new Server(server, { cors: { origin: "*" } });
 const path = require('path');
 const pkg = require('./package.json');
+const mongoose = require('mongoose');
+
+// Connect to MongoDB
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    console.error('MONGODB_URI is not set in environment variables');
+    process.exit(1);
+}
+
+mongoose.connect(MONGODB_URI).then(() => {
+    console.log('✅ Connected to MongoDB');
+}).catch(err => {
+    console.error('❌ Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+});
+
+// Message Schema
+const messageSchema = new mongoose.Schema({
+    room: { type: String, required: true, index: true },
+    text: { type: String, required: true },
+    sender: { type: String, required: true },
+    color: { type: String, default: '#667eea' },
+    timestamp: { type: Date, default: Date.now, index: true },
+    isSystemMessage: { type: Boolean, default: false }
+});
+
+const Message = mongoose.model('Message', messageSchema);
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -47,12 +75,12 @@ app.get('/api/rooms', (req, res) => {
 const lastMessageTime = {};
 
 // API endpoint to check for new messages (for Service Worker background sync)
-app.get('/check-messages/:room', (req, res) => {
+app.get('/check-messages/:room', async (req, res) => {
     const room = decodeURIComponent(req.params.room);
     const user = req.query.user || 'unknown';
     
     try {
-        const messages = loadRoomMessages(room);
+        const messages = await loadRoomMessages(room);
         if (!lastMessageTime[room]) {
             lastMessageTime[room] = 0;
         }
@@ -128,31 +156,29 @@ rooms = rooms.map(room => {
     return room;
 });
 
-// Helper function to get messages file path for a room
-function getMessagesFilePath(room) {
-    return path.join(__dirname, `room_messages_${room.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
-}
-
-// Helper function to load messages for a room
-function loadRoomMessages(room) {
+// Helper function to load messages for a room from MongoDB
+async function loadRoomMessages(room) {
     try {
-        const filePath = getMessagesFilePath(room);
-        if (fs.existsSync(filePath)) {
-            return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        }
+        const messages = await Message.find({ room: room }).sort({ timestamp: 1 }).exec();
+        return messages;
     } catch(e) {
         console.log(`Error loading messages for room ${room}:`, e);
     }
     return [];
 }
 
-// Helper function to save a message for a room
-function saveRoomMessage(room, message) {
+// Helper function to save a message for a room to MongoDB
+async function saveRoomMessage(room, message) {
     try {
-        const filePath = getMessagesFilePath(room);
-        let messages = loadRoomMessages(room);
-        messages.push(message);
-        fs.writeFileSync(filePath, JSON.stringify(messages, null, 2));
+        const msg = new Message({
+            room: room,
+            text: message.text,
+            sender: message.sender,
+            color: message.color,
+            timestamp: message.timestamp,
+            isSystemMessage: message.isSystemMessage || false
+        });
+        await msg.save();
     } catch(e) {
         console.log(`Error saving message for room ${room}:`, e);
     }
@@ -169,8 +195,8 @@ function getRoomInfo(roomName) {
 // Create routes for all rooms from rooms.json
 rooms.forEach(room => {
     const roomName = typeof room === 'string' ? room : room.name;
-    app.get('/' + encodeURIComponent(roomName), (req, res) => {
-        const messages = loadRoomMessages(roomName);
+    app.get('/' + encodeURIComponent(roomName), async (req, res) => {
+        const messages = await loadRoomMessages(roomName);
         res.render('room', {room: roomName, messages: messages});
     });
 });
@@ -206,8 +232,8 @@ app.post('/newroom', jsonParser, (req, res) => {
         
         // Create new route for this room
         const roomName = typeof newRoom === 'string' ? newRoom : newRoom.name;
-        app.get('/' + encodeURIComponent(roomName), (req, res) => {
-            const messages = loadRoomMessages(roomName);
+        app.get('/' + encodeURIComponent(roomName), async (req, res) => {
+            const messages = await loadRoomMessages(roomName);
             res.render('room', {room: roomName, messages: messages});
         });
         
@@ -233,7 +259,7 @@ const admin = io.of("/admin");
 const roomUsers = {};
 
 admin.on('connection', (socket) => {
-    socket.on('join', (data) => {
+    socket.on('join', async (data) => {
         socket.join(data.room);
         
         // Track user in room
@@ -247,7 +273,7 @@ admin.on('connection', (socket) => {
 
         // Send previous messages for all rooms
         try {
-            const messages = loadRoomMessages(data.room);
+            const messages = await loadRoomMessages(data.room);
             messages.forEach(msg => {
                 socket.emit('chat message', {
                     text: msg.text,
@@ -257,7 +283,7 @@ admin.on('connection', (socket) => {
                 });
             });
         } catch(e) {
-            // File doesn't exist or is empty
+            // Database error - continue anyway
         }
 
         // Send updated user list to all in room
@@ -272,10 +298,10 @@ admin.on('connection', (socket) => {
         });
     })
 
-    socket.on('chat message', (data) => {
+    socket.on('chat message', async (data) => {
         // Handle system messages (like highscores)
         if (data.isSystemMessage) {
-            // Don't save system messages to file, just broadcast them
+            // Don't save system messages to database, just broadcast them
             admin.in(data.room).emit('chat message', {
                 text: data.msg,
                 sender: data.sender || 'System',
@@ -295,7 +321,7 @@ admin.on('connection', (socket) => {
                 });
             }
         } else {
-            // Save regular message for all rooms
+            // Save regular message to MongoDB
             const messageData = {
                 text: data.msg,
                 sender: data.sender || 'User',
@@ -303,7 +329,7 @@ admin.on('connection', (socket) => {
                 timestamp: new Date()
             };
             
-            saveRoomMessage(data.room, messageData);
+            await saveRoomMessage(data.room, messageData);
             
             // Emit the message to all clients in the room
             admin.in(data.room).emit('chat message', messageData);
