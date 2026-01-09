@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-7-3';
+const CACHE_NAME = 'familieskatt-v1-7-4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -83,6 +83,62 @@ self.addEventListener('fetch', event => {
 let currentRoom = null;
 let currentUser = null;
 let currentPageVisible = true;
+let eventSourceConnection = null;
+
+// Start listening to message notifications via SSE
+function startSSEListener() {
+  if (currentRoom && !eventSourceConnection) {
+    try {
+      eventSourceConnection = new EventSource(`/notify/${encodeURIComponent(currentRoom)}`);
+      
+      eventSourceConnection.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Broadcast to all clients
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({
+                type: 'NOTIFICATION',
+                data: data
+              });
+            });
+          });
+          
+          // Show notification if it's not a keepalive
+          if (data.type && data.sender !== currentUser) {
+            self.registration.showNotification(`💬 ${data.sender}`, {
+              body: data.text.substring(0, 100),
+              icon: '/icons/icon-192.png',
+              badge: '/icons/icon-192.png',
+              tag: `chat-message-${Date.now()}`,
+              requireInteraction: false
+            });
+          }
+        } catch (e) {
+          // Ignore keepalive messages and parse errors
+        }
+      };
+      
+      eventSourceConnection.onerror = () => {
+        if (eventSourceConnection) {
+          eventSourceConnection.close();
+          eventSourceConnection = null;
+        }
+      };
+    } catch (e) {
+      console.log('SSE connection error:', e);
+    }
+  }
+}
+
+// Stop SSE listener
+function stopSSEListener() {
+  if (eventSourceConnection) {
+    eventSourceConnection.close();
+    eventSourceConnection = null;
+  }
+}
 
 // Message event for cache updates and notifications
 self.addEventListener('message', event => {
@@ -97,8 +153,15 @@ self.addEventListener('message', event => {
   
   // Store current room and user for background message handling
   if (event.data && event.data.type === 'UPDATE_ROOM_INFO') {
+    const oldRoom = currentRoom;
     currentRoom = event.data.room;
     currentUser = event.data.user;
+    
+    // Start/restart SSE listener if room changed
+    if (oldRoom !== currentRoom) {
+      stopSSEListener();
+      startSSEListener();
+    }
   }
   
   // Handle notification from main thread

@@ -27,6 +27,43 @@ app.get('/version', (req, res) => {
     res.json({ version: pkg.version });
 });
 
+// Store active SSE connections for notifications
+const sseClients = {};
+
+// SSE endpoint for push notifications
+app.get('/notify/:room', (req, res) => {
+    const room = decodeURIComponent(req.params.room);
+    
+    // Set up SSE connection
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+    });
+    
+    // Add client to room's SSE listeners
+    if (!sseClients[room]) {
+        sseClients[room] = [];
+    }
+    sseClients[room].push(res);
+    
+    // Keep connection alive
+    const keepAliveInterval = setInterval(() => {
+        res.write(': keepalive\n\n');
+    }, 30000);
+    
+    // Clean up on disconnect
+    req.on('close', () => {
+        clearInterval(keepAliveInterval);
+        sseClients[room] = sseClients[room].filter(client => client !== res);
+        if (sseClients[room].length === 0) {
+            delete sseClients[room];
+        }
+        res.end();
+    });
+});
+
 let rooms = JSON.parse(fs.readFileSync('./rooms.json', 'utf-8'));
 
 // Normalize rooms to support both string and object format
@@ -192,6 +229,17 @@ admin.on('connection', (socket) => {
                 isSystemMessage: true,
                 timestamp: new Date()
             });
+            
+            // Send via SSE for background notifications
+            if (sseClients[data.room]) {
+                sseClients[data.room].forEach(client => {
+                    client.write(`data: ${JSON.stringify({
+                        type: 'system-message',
+                        text: data.msg,
+                        sender: data.sender
+                    })}\n\n`);
+                });
+            }
         } else {
             // Save regular message for all rooms
             const messageData = {
@@ -205,6 +253,17 @@ admin.on('connection', (socket) => {
             
             // Emit the message to all clients in the room
             admin.in(data.room).emit('chat message', messageData);
+            
+            // Send via SSE for background notifications (only regular messages)
+            if (sseClients[data.room]) {
+                sseClients[data.room].forEach(client => {
+                    client.write(`data: ${JSON.stringify({
+                        type: 'message',
+                        text: data.msg,
+                        sender: data.sender
+                    })}\n\n`);
+                });
+            }
         }
     });
 
