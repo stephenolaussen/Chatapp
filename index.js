@@ -17,12 +17,18 @@ let mongoConnected = false;
 
 // Set up Web Push API (optional - only if VAPID keys are configured)
 let webPushEnabled = false;
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+const vapidPublic = process.env.VAPID_PUBLIC_KEY || '';
+const vapidPrivate = process.env.VAPID_PRIVATE_KEY || '';
+
+console.log(`Debug: VAPID_PUBLIC_KEY length = ${vapidPublic.length}`);
+console.log(`Debug: VAPID_PRIVATE_KEY length = ${vapidPrivate.length}`);
+
+if (vapidPublic && vapidPrivate) {
     try {
         webpush.setVapidDetails(
             'mailto:example@example.com',
-            process.env.VAPID_PUBLIC_KEY,
-            process.env.VAPID_PRIVATE_KEY
+            vapidPublic,
+            vapidPrivate
         );
         webPushEnabled = true;
         console.log('✅ Web Push API enabled');
