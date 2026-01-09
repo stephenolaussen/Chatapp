@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-7-7';
+const CACHE_NAME = 'familieskatt-v1-7-8';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -84,60 +84,80 @@ let currentRoom = null;
 let currentUser = null;
 let currentPageVisible = true;
 let lastCheckedTime = {};
+let pollingInterval = null;
 
 // Aggressive polling - check every 3 seconds
 function startAggressivePolling() {
+  // Stop existing polling first
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+  
   if (!currentRoom || !currentUser) {
+    console.log('SW: Cannot start polling, missing room or user', { currentRoom, currentUser });
     return;
   }
   
+  console.log('SW: Starting aggressive polling for room:', currentRoom, 'user:', currentUser);
+  
   // Initialize last checked time for this room
   if (!lastCheckedTime[currentRoom]) {
-    lastCheckedTime[currentRoom] = Date.now();
+    lastCheckedTime[currentRoom] = Date.now() - 5000; // Look back 5 seconds to catch recent messages
   }
   
   // Check for new messages every 3 seconds (more aggressive)
-  const pollingId = setInterval(async () => {
+  pollingInterval = setInterval(async () => {
     if (!currentRoom || !currentUser) {
-      clearInterval(pollingId);
+      console.log('SW: Stopping polling - missing room or user');
+      clearInterval(pollingInterval);
+      pollingInterval = null;
       return;
     }
     
     try {
-      const response = await fetch(`/check-messages/${encodeURIComponent(currentRoom)}?user=${encodeURIComponent(currentUser)}&t=${Date.now()}`);
+      const url = `/check-messages/${encodeURIComponent(currentRoom)}?user=${encodeURIComponent(currentUser)}&t=${Date.now()}`;
+      console.log('SW: Polling...', url);
+      
+      const response = await fetch(url);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('SW: Got response:', data);
         
         if (data.messages && data.messages.length > 0) {
+          console.log('SW: Found', data.messages.length, 'messages');
+          
           // Only show notifications for messages newer than last check
           const nowTime = Date.now();
           data.messages.forEach(msg => {
             const msgTime = new Date(msg.timestamp).getTime();
+            console.log('SW: Checking message from', msg.sender, 'time:', msgTime, 'lastChecked:', lastCheckedTime[currentRoom]);
             
             // Only show if message is newer than last check time AND not from current user
             if (msgTime > lastCheckedTime[currentRoom] && msg.sender !== currentUser) {
+              console.log('SW: Showing notification for:', msg.sender);
               self.registration.showNotification(`💬 ${msg.sender}`, {
                 body: msg.text.substring(0, 100),
                 icon: '/icons/icon-192.png',
                 badge: '/icons/icon-192.png',
                 tag: `chat-${Date.now()}`,
                 requireInteraction: false
-              }).catch(err => console.log('Notification error:', err));
+              }).catch(err => console.log('SW: Notification error:', err));
             }
           });
           
           // Update last checked time
           lastCheckedTime[currentRoom] = nowTime;
+        } else {
+          console.log('SW: No new messages');
         }
+      } else {
+        console.log('SW: Response not OK:', response.status);
       }
     } catch (e) {
-      // Silently fail, will retry next interval
+      console.log('SW: Polling error:', e);
     }
   }, 3000); // Check every 3 seconds
-  
-  // Keep polling even if this function is called again
-  return pollingId;
 }
 
 

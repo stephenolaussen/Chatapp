@@ -27,6 +27,44 @@ app.get('/version', (req, res) => {
     res.json({ version: pkg.version });
 });
 
+// Track last message timestamp per room for notifications
+const lastMessageTime = {};
+
+// API endpoint to check for new messages (for Service Worker background sync)
+app.get('/check-messages/:room', (req, res) => {
+    const room = decodeURIComponent(req.params.room);
+    const user = req.query.user || 'unknown';
+    
+    try {
+        const messages = loadRoomMessages(room);
+        if (!lastMessageTime[room]) {
+            lastMessageTime[room] = 0;
+        }
+        
+        // Get messages since last check
+        const newMessages = messages.filter(msg => {
+            const msgTime = new Date(msg.timestamp).getTime();
+            return msgTime > lastMessageTime[room];
+        });
+        
+        // Update last message time
+        if (messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
+            lastMessageTime[room] = new Date(lastMsg.timestamp).getTime();
+        }
+        
+        res.json({
+            success: true,
+            messages: newMessages
+        });
+    } catch (e) {
+        res.json({
+            success: false,
+            messages: []
+        });
+    }
+});
+
 // Store active SSE connections for notifications
 const sseClients = {};
 
