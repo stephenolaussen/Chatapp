@@ -1,6 +1,6 @@
 {
   "name": "familie-chat",
-  "version": "1.9.3",
+  "version": "1.10.0",
   "description": "A simple and fun chat app for the family",
   "license": "MIT",
   "author": "",
@@ -17,7 +17,8 @@
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "mongoose": "^9.1.2",
-    "socket.io": "^4.7.1"
+    "socket.io": "^4.7.1",
+    "web-push": "^3.6.7"
   },
   "engines": {
     "node": "18.17.0"

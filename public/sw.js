@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-9-3';
+const CACHE_NAME = 'familieskatt-v1-10-0';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -240,6 +240,41 @@ self.addEventListener('message', event => {
         requireInteraction: false
       });
     }
+  }
+});
+
+// Push notification event (when Web Push message is received)
+self.addEventListener('push', event => {
+  if (!event.data) {
+    console.log('Push received but no data');
+    return;
+  }
+
+  try {
+    const pushData = JSON.parse(event.data.text());
+    const { title, options } = pushData;
+
+    // Increment unread count for badge
+    unreadCount++;
+
+    // Show push notification
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        badge: options.badge || '/icons/badge-72x72.png',
+        icon: options.icon || '/icons/icon-192x192.png',
+        body: options.body || '',
+        tag: options.tag || 'push-notification',
+        requireInteraction: false,
+        data: options.data || {}
+      }).then(() => {
+        // Update badge after showing notification
+        if ('setAppBadge' in navigator) {
+          navigator.setAppBadge(unreadCount).catch(() => {});
+        }
+      })
+    );
+  } catch (err) {
+    console.error('Error handling push notification:', err);
   }
 });
 

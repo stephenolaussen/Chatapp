@@ -9,10 +9,18 @@ const path = require('path');
 const pkg = require('./package.json');
 const mongoose = require('mongoose');
 const fs = require('fs');
+const webpush = require('web-push');
 
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI;
 let mongoConnected = false;
+
+// Set up Web Push API
+webpush.setVapidDetails(
+    'mailto:example@example.com',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+);
 
 if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI).then(() => {
@@ -40,6 +48,18 @@ const messageSchema = new mongoose.Schema({
 
 const Message = mongoose.model('Message', messageSchema);
 
+// Push Subscription Schema
+const subscriptionSchema = new mongoose.Schema({
+    endpoint: { type: String, required: true, unique: true },
+    keys: {
+        p256dh: { type: String, required: true },
+        auth: { type: String, required: true }
+    },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Subscription = mongoose.model('Subscription', subscriptionSchema);
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
@@ -58,6 +78,90 @@ app.get('/', (req, res) => {
 app.get('/version', (req, res) => {
     res.json({ version: pkg.version });
 });
+
+// Get VAPID public key endpoint
+app.get('/vapid-public-key', (req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+// Subscribe to push notifications
+app.post('/subscribe', jsonParser, async (req, res) => {
+    const subscription = req.body;
+    
+    if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ success: false, message: 'Invalid subscription' });
+    }
+    
+    try {
+        if (mongoConnected && Subscription) {
+            // Save subscription to MongoDB
+            await Subscription.updateOne(
+                { endpoint: subscription.endpoint },
+                { ...subscription },
+                { upsert: true }
+            );
+        } else {
+            // Fallback: Save to file
+            const subscriptionsFile = path.join(__dirname, 'subscriptions.json');
+            let subs = [];
+            if (fs.existsSync(subscriptionsFile)) {
+                subs = JSON.parse(fs.readFileSync(subscriptionsFile, 'utf-8'));
+            }
+            // Remove if exists, then add new
+            subs = subs.filter(s => s.endpoint !== subscription.endpoint);
+            subs.push(subscription);
+            fs.writeFileSync(subscriptionsFile, JSON.stringify(subs, null, 2));
+        }
+        
+        res.json({ success: true, message: 'Subscription saved' });
+    } catch (err) {
+        console.error('Error saving subscription:', err);
+        res.status(500).json({ success: false, message: 'Error saving subscription' });
+    }
+});
+
+// Helper to send push notifications to all subscribers
+async function sendPushNotificationToAll(title, options) {
+    try {
+        let subscriptions = [];
+        
+        if (mongoConnected && Subscription) {
+            subscriptions = await Subscription.find({});
+        } else {
+            // Fallback: Read from file
+            const subscriptionsFile = path.join(__dirname, 'subscriptions.json');
+            if (fs.existsSync(subscriptionsFile)) {
+                subscriptions = JSON.parse(fs.readFileSync(subscriptionsFile, 'utf-8'));
+            }
+        }
+        
+        const promises = subscriptions.map(sub => {
+            return webpush.sendNotification(sub, JSON.stringify({
+                title: title,
+                options: options
+            })).catch(err => {
+                console.error('Push failed for subscription:', err.message);
+                // Remove invalid subscriptions
+                if (err.statusCode === 410) {
+                    if (mongoConnected && Subscription) {
+                        Subscription.deleteOne({ endpoint: sub.endpoint }).catch(() => {});
+                    } else {
+                        const subscriptionsFile = path.join(__dirname, 'subscriptions.json');
+                        if (fs.existsSync(subscriptionsFile)) {
+                            let subs = JSON.parse(fs.readFileSync(subscriptionsFile, 'utf-8'));
+                            subs = subs.filter(s => s.endpoint !== sub.endpoint);
+                            fs.writeFileSync(subscriptionsFile, JSON.stringify(subs, null, 2));
+                        }
+                    }
+                }
+            });
+        });
+        
+        await Promise.all(promises);
+    } catch (err) {
+        console.error('Error sending push notifications:', err);
+    }
+}
 
 // API endpoint to get all available rooms (for Service Worker background notifications)
 app.get('/api/rooms', (req, res) => {
@@ -382,6 +486,22 @@ admin.on('connection', (socket) => {
             
             // Emit the message to all clients in the room
             admin.in(data.room).emit('chat message', messageData);
+            
+            // Send Web Push notification to all subscribed devices
+            await sendPushNotificationToAll(
+                `💬 ${data.sender} in ${data.room}`,
+                {
+                    body: data.msg,
+                    icon: '/icons/icon-192x192.png',
+                    badge: '/icons/badge-72x72.png',
+                    tag: `message-${data.room}`,
+                    data: {
+                        room: data.room,
+                        sender: data.sender,
+                        timestamp: Date.now()
+                    }
+                }
+            );
             
             // Send via SSE for background notifications (only regular messages)
             if (sseClients[data.room]) {
