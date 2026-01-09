@@ -8,20 +8,25 @@ const io = new Server(server, { cors: { origin: "*" } });
 const path = require('path');
 const pkg = require('./package.json');
 const mongoose = require('mongoose');
+const fs = require('fs');
 
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-    console.error('MONGODB_URI is not set in environment variables');
-    process.exit(1);
-}
+let mongoConnected = false;
 
-mongoose.connect(MONGODB_URI).then(() => {
-    console.log('✅ Connected to MongoDB');
-}).catch(err => {
-    console.error('❌ Failed to connect to MongoDB:', err.message);
-    process.exit(1);
-});
+if (MONGODB_URI) {
+    mongoose.connect(MONGODB_URI).then(() => {
+        console.log('✅ Connected to MongoDB');
+        mongoConnected = true;
+    }).catch(err => {
+        console.error('❌ Failed to connect to MongoDB:', err.message);
+        console.error('⚠️ Falling back to file-based storage');
+        mongoConnected = false;
+    });
+} else {
+    console.warn('⚠️ MONGODB_URI not set - using file-based storage');
+    mongoConnected = false;
+}
 
 // Message Schema
 const messageSchema = new mongoose.Schema({
@@ -41,7 +46,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
-var fs = require('fs');
 
 app.get('/', (req, res) => {
     const roomsForDisplay = rooms.map(r => typeof r === 'string' ? r : r.name);
@@ -156,31 +160,76 @@ rooms = rooms.map(room => {
     return room;
 });
 
-// Helper function to load messages for a room from MongoDB
+// Helper function to get messages file path for a room (fallback)
+function getMessagesFilePath(room) {
+    return path.join(__dirname, `room_messages_${room.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
+}
+
+// Helper function to load messages for a room
 async function loadRoomMessages(room) {
     try {
-        const messages = await Message.find({ room: room }).sort({ timestamp: 1 }).exec();
-        return messages;
+        if (mongoConnected && Message) {
+            const messages = await Message.find({ room: room }).sort({ timestamp: 1 }).exec();
+            return messages;
+        } else {
+            // Fallback to file-based storage
+            const filePath = getMessagesFilePath(room);
+            if (fs.existsSync(filePath)) {
+                return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            }
+        }
     } catch(e) {
         console.log(`Error loading messages for room ${room}:`, e);
+        // Try fallback if MongoDB fails
+        try {
+            const filePath = getMessagesFilePath(room);
+            if (fs.existsSync(filePath)) {
+                return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            }
+        } catch(e2) {
+            console.log(`Fallback also failed for room ${room}`);
+        }
     }
     return [];
 }
 
-// Helper function to save a message for a room to MongoDB
+// Helper function to save a message for a room
 async function saveRoomMessage(room, message) {
     try {
-        const msg = new Message({
-            room: room,
-            text: message.text,
-            sender: message.sender,
-            color: message.color,
-            timestamp: message.timestamp,
-            isSystemMessage: message.isSystemMessage || false
-        });
-        await msg.save();
+        if (mongoConnected && Message) {
+            const msg = new Message({
+                room: room,
+                text: message.text,
+                sender: message.sender,
+                color: message.color,
+                timestamp: message.timestamp,
+                isSystemMessage: message.isSystemMessage || false
+            });
+            await msg.save();
+        } else {
+            // Fallback to file-based storage
+            const filePath = getMessagesFilePath(room);
+            let messages = [];
+            if (fs.existsSync(filePath)) {
+                messages = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            }
+            messages.push(message);
+            fs.writeFileSync(filePath, JSON.stringify(messages, null, 2));
+        }
     } catch(e) {
         console.log(`Error saving message for room ${room}:`, e);
+        // Try fallback if MongoDB fails
+        try {
+            const filePath = getMessagesFilePath(room);
+            let messages = [];
+            if (fs.existsSync(filePath)) {
+                messages = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            }
+            messages.push(message);
+            fs.writeFileSync(filePath, JSON.stringify(messages, null, 2));
+        } catch(e2) {
+            console.log(`Fallback also failed for room ${room}`);
+        }
     }
 }
 
