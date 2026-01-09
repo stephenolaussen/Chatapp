@@ -25,19 +25,18 @@
 
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #f5f5f7;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        color: #333;
+        color: #1d1d1f;
         overflow: hidden;
       }
 
       .header {
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(10px);
+        background: white;
         padding: 0.75rem 1rem;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -46,6 +45,7 @@
         position: sticky;
         top: 0;
         z-index: 50;
+        border-bottom: 1px solid #e5e5e7;
       }
 
       .header-left {
@@ -79,13 +79,13 @@
       }
 
       .online-count {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        background: #34c759;
         color: white;
         padding: 0.35rem 1rem;
         border-radius: 25px;
         font-weight: 600;
         font-size: 0.85rem;
-        box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+        box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2);
       }
 
       .user-list {
@@ -93,15 +93,14 @@
         position: absolute;
         top: 60px;
         right: 10px;
-        background: rgba(255, 255, 255, 0.97);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         max-height: 350px;
         overflow-y: auto;
         z-index: 100;
         min-width: 220px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid #e5e5e7;
       }
 
       .user-list.show {
@@ -142,7 +141,7 @@
       }
 
       .header a {
-        color: #667eea;
+        color: #0071e3;
         text-decoration: none;
         font-size: 1.2rem;
         transition: all 0.2s;
@@ -151,27 +150,27 @@
       }
 
       .header a:hover {
-        color: #764ba2;
-        background: rgba(102, 126, 234, 0.1);
+        color: #0071e3;
+        background: #f5f5f7;
       }
 
       .user-info {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        background: linear-gradient(135deg, var(--user-color, #667eea) 0%, var(--user-color-dark, #764ba2) 100%);
+        background: var(--user-color, #0071e3);
         color: white;
         padding: 0.6rem 1.2rem;
         border-radius: 25px;
         cursor: pointer;
         transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 113, 227, 0.15);
         font-weight: 500;
       }
 
       .user-info:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        opacity: 0.9;
+        box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
       }
 
       #messages {
@@ -182,6 +181,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        background: white;
       }
 
       #messages > li {
@@ -211,7 +211,7 @@
       }
 
       .message-actions button {
-        background: rgba(102, 126, 234, 0.8);
+        background: #0071e3;
         border: none;
         color: white;
         width: 1.8rem;
@@ -223,17 +223,19 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
       }
 
       .message-actions button:hover {
-        background: rgba(102, 126, 234, 1);
+        background: #0071e3;
         transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
       }
 
       .message-bubble {
         padding: 0.85rem 1.2rem;
         border-radius: 18px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         animation: fadeIn 0.3s ease;
       }
 
@@ -249,14 +251,14 @@
       }
 
       #messages > li.own-message .message-bubble {
-        background: var(--user-color, #667eea);
+        background: var(--user-color, #0071e3);
         color: white;
         border-bottom-right-radius: 3px;
       }
 
       #messages > li:not(.own-message) .message-bubble {
-        background: var(--message-color, #667eea);
-        color: white;
+        background: var(--message-color, #e8e8ed);
+        color: #1d1d1f;
         border-bottom-left-radius: 3px;
       }
 
@@ -284,34 +286,33 @@
       }
 
       #form {
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(10px);
+        background: white;
         padding: 1.2rem;
         display: flex;
         gap: 0.75rem;
-        box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.08);
+        border-top: 1px solid #e5e5e7;
       }
 
       #input {
-        border: 2px solid #e5e7eb;
+        border: 1px solid #d5d5d7;
         padding: 0.85rem 1.2rem;
         flex-grow: 1;
         border-radius: 28px;
         font-size: 1rem;
         transition: all 0.2s;
-        background: #f9fafb;
+        background: #f5f5f7;
       }
 
       #input:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: #0071e3;
         background: white;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
       }
 
       #form > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0071e3;
         border: none;
         padding: 0.85rem 1.8rem;
         border-radius: 28px;
@@ -320,12 +321,12 @@
         font-weight: 600;
         transition: all 0.3s;
         font-size: 1rem;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
       }
 
       #form > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        opacity: 0.9;
+        box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
       }
 
       #form > button:active {
@@ -334,7 +335,7 @@
 
       .emoji-btn {
         background: white;
-        border: 2px solid #e5e7eb;
+        border: 1px solid #d5d5d7;
         padding: 0.6rem 1rem;
         border-radius: 25px;
         cursor: pointer;
@@ -343,8 +344,8 @@
       }
 
       .emoji-btn:hover {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
+        border-color: #0071e3;
+        background: #f5f5f7;
         transform: scale(1.05);
       }
 
@@ -353,7 +354,7 @@
       }
 
       .alarm-btn {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        background: #ff3b30;
         border: none;
         padding: 0.3rem 0.6rem;
         border-radius: 18px;
@@ -362,7 +363,7 @@
         font-weight: 600;
         transition: all 0.2s;
         font-size: 0.7rem;
-        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        box-shadow: 0 2px 8px rgba(255, 59, 48, 0.2);
         flex-shrink: 0;
         display: flex;
         align-items: center;
@@ -370,8 +371,8 @@
       }
 
       .alarm-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        opacity: 0.9;
+        box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
       }
 
       .alarm-btn:active {
@@ -404,7 +405,7 @@
         max-width: 420px;
         width: 90%;
         animation: slideIn 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid #e5e5e7;
       }
 
       @keyframes slideIn {
@@ -420,10 +421,10 @@
 
       @keyframes alarm-flash {
         0%, 100% {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #f5f5f7;
         }
         50% {
-          background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+          background: #ff3b30;
         }
       }
 
@@ -449,19 +450,19 @@
       .form-group input[type="color"] {
         width: 100%;
         padding: 0.85rem 1rem;
-        border: 2px solid #e5e7eb;
+        border: 1px solid #d5d5d7;
         border-radius: 10px;
         font-size: 1rem;
         transition: all 0.2s;
-        background: #f9fafb;
+        background: #f5f5f7;
       }
 
       .form-group input[type="text"]:focus,
       .form-group input[type="color"]:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: #0071e3;
         background: white;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
       }
 
       .color-options {
@@ -508,14 +509,14 @@
       }
 
       .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0071e3;
         color: white;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 113, 227, 0.15);
       }
 
       .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        opacity: 0.9;
+        box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
       }
 
       .btn-secondary {
@@ -532,17 +533,16 @@
         position: fixed;
         bottom: 80px;
         right: 10px;
-        background: rgba(255, 255, 255, 0.97);
-        backdrop-filter: blur(10px);
+        background: white;
         border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         padding: 1.2rem;
         display: none;
         grid-template-columns: repeat(6, 1fr);
         gap: 0.6rem;
         max-width: 320px;
         z-index: 500;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid #e5e5e7;
         overflow: hidden;
       }
 
@@ -562,7 +562,7 @@
       }
 
       .emoji-picker span:hover {
-        background: rgba(102, 126, 234, 0.1);
+        background: rgba(0, 113, 227, 0.1);
         transform: scale(1.15);
       }
 
@@ -601,7 +601,7 @@
         max-width: 420px;
         width: 90%;
         animation: slideIn 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid #e5e5e7;
       }
 
       .edit-modal h2 {
@@ -614,7 +614,7 @@
       .edit-textarea {
         width: 100%;
         padding: 0.85rem 1rem;
-        border: 2px solid #e5e7eb;
+        border: 1px solid #d5d5d7;
         border-radius: 10px;
         font-size: 1rem;
         font-family: inherit;
@@ -626,9 +626,9 @@
 
       .edit-textarea:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: #0071e3;
         background: white;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
       }
 
       #gameCanvas {
