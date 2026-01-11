@@ -174,6 +174,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 // Middleware to check if user is authenticated and in whitelist
 const isAuthenticated = async (req, res, next) => {
@@ -222,7 +223,7 @@ app.get('/admin', (req, res) => {
     res.render('admin-login', { error: null });
 });
 
-app.post('/admin/login', jsonParser, (req, res) => {
+app.post('/admin/login', urlencodedParser, (req, res) => {
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
     console.log('DEBUG - Admin Login Attempt');
     console.log('Submitted password:', JSON.stringify(req.body.password));
