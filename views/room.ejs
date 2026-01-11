@@ -866,6 +866,20 @@
         border-radius: 8px;
         margin: 1rem auto;
         display: block;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+      }
+
+      #ballCanvas {
+        border: 2px solid #764ba2;
+        background: #f0f0f0;
+        border-radius: 8px;
+        margin: 1rem auto;
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
       }
 
       @media (max-width: 600px) {
@@ -989,6 +1003,36 @@
           right: 5px;
           left: 5px;
           max-width: none;
+        }
+
+        .game-modal-content {
+          max-width: 95vw;
+          width: 95vw;
+          padding: 1.5rem;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+
+        #snakeCanvas,
+        #ballCanvas,
+        #gameCanvas {
+          width: 100% !important;
+          max-width: calc(95vw - 3rem) !important;
+          height: auto !important;
+        }
+
+        .game-instructions {
+          font-size: 0.85rem;
+          padding: 0.75rem;
+        }
+
+        .game-buttons {
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .game-stat-value {
+          font-size: 1.2rem;
         }
       }
     </style>
