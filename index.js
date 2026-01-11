@@ -11,6 +11,13 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const webpush = require('web-push');
 
+// Authentication imports
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI;
 let mongoConnected = false;
@@ -76,6 +83,86 @@ const subscriptionSchema = new mongoose.Schema({
 
 const Subscription = mongoose.model('Subscription', subscriptionSchema);
 
+// Whitelist Schema - for authorized users
+const whitelistSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true, lowercase: true },
+    name: { type: String },
+    addedAt: { type: Date, default: Date.now }
+});
+
+const Whitelist = mongoose.model('Whitelist', whitelistSchema);
+
+// User Session Schema
+const userSessionSchema = new mongoose.Schema({
+    googleId: { type: String, unique: true, sparse: true },
+    email: { type: String, required: true, lowercase: true },
+    displayName: { type: String },
+    photo: { type: String },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const UserSession = mongoose.model('UserSession', userSessionSchema);
+
+// Session middleware setup
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: false, // set to true if using HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
+// Passport setup
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackURL: process.env.NODE_ENV === 'production'
+        ? 'https://web-production-482a.up.railway.app/auth/google/callback'
+        : 'http://localhost:3000/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        if (!mongoConnected || !UserSession) {
+            return done(null, profile);
+        }
+        
+        let user = await UserSession.findOne({ googleId: profile.id });
+        if (!user) {
+            user = new UserSession({
+                googleId: profile.id,
+                email: profile.emails[0].value,
+                displayName: profile.displayName,
+                photo: profile.photos[0]?.value
+            });
+            await user.save();
+        }
+        return done(null, user);
+    } catch (err) {
+        return done(err);
+    }
+}));
+
+passport.serializeUser((user, done) => {
+    done(null, user._id || user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        if (mongoConnected && UserSession) {
+            const user = await UserSession.findById(id);
+            done(null, user);
+        } else {
+            done(null, { id });
+        }
+    } catch (err) {
+        done(err);
+    }
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
@@ -83,9 +170,133 @@ app.use(express.static(path.join(__dirname, 'public')));
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
 
-app.get('/', (req, res) => {
+// Middleware to check if user is authenticated and in whitelist
+const isAuthenticated = async (req, res, next) => {
+    if (!req.user) {
+        return res.redirect('/login');
+    }
+    
+    // Check if user is in whitelist
+    if (mongoConnected && Whitelist) {
+        const whitelisted = await Whitelist.findOne({ email: req.user.email });
+        if (!whitelisted) {
+            return res.render('access-denied', { email: req.user.email });
+        }
+    }
+    next();
+};
+
+// Login page
+app.get('/login', (req, res) => {
+    if (req.user) {
+        return res.redirect('/');
+    }
+    res.render('login');
+});
+
+// Google OAuth routes
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+        res.redirect('/');
+    }
+);
+
+// Logout
+app.get('/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) return next(err);
+        res.redirect('/login');
+    });
+});
+
+// Admin panel routes
+app.get('/admin', (req, res) => {
+    res.render('admin-login');
+});
+
+app.post('/admin/login', jsonParser, (req, res) => {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    if (req.body.password === adminPassword) {
+        req.session.adminAuth = true;
+        res.redirect('/admin/dashboard');
+    } else {
+        res.render('admin-login', { error: 'Invalid password' });
+    }
+});
+
+app.get('/admin/dashboard', (req, res) => {
+    if (!req.session.adminAuth) {
+        return res.redirect('/admin');
+    }
+    res.render('admin-dashboard');
+});
+
+// API for admin to get whitelist
+app.get('/api/admin/whitelist', async (req, res) => {
+    if (!req.session.adminAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        if (mongoConnected && Whitelist) {
+            const list = await Whitelist.find({}).sort({ addedAt: -1 });
+            res.json(list);
+        } else {
+            res.json([]);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API to add user to whitelist
+app.post('/api/admin/whitelist/add', jsonParser, async (req, res) => {
+    if (!req.session.adminAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const { email, name } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email required' });
+        }
+        
+        if (mongoConnected && Whitelist) {
+            const existing = await Whitelist.findOne({ email: email.toLowerCase() });
+            if (existing) {
+                return res.status(400).json({ error: 'Email already in whitelist' });
+            }
+            
+            const newEntry = new Whitelist({ email: email.toLowerCase(), name });
+            await newEntry.save();
+            res.json({ success: true, data: newEntry });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API to remove user from whitelist
+app.post('/api/admin/whitelist/remove', jsonParser, async (req, res) => {
+    if (!req.session.adminAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const { email } = req.body;
+        if (mongoConnected && Whitelist) {
+            await Whitelist.deleteOne({ email: email.toLowerCase() });
+            res.json({ success: true });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Protected chat route - require authentication
+app.get('/', isAuthenticated, (req, res) => {
     const roomsForDisplay = rooms.map(r => typeof r === 'string' ? r : r.name);
-    res.render('index', {rooms: roomsForDisplay});
+    res.render('index', {rooms: roomsForDisplay, user: req.user});
 });
 
 // These routes are now handled dynamically below
@@ -371,9 +582,9 @@ function getRoomInfo(roomName) {
 // Create routes for all rooms from rooms.json
 rooms.forEach(room => {
     const roomName = typeof room === 'string' ? room : room.name;
-    app.get('/' + encodeURIComponent(roomName), async (req, res) => {
+    app.get('/' + encodeURIComponent(roomName), isAuthenticated, async (req, res) => {
         const messages = await loadRoomMessages(roomName);
-        res.render('room', {room: roomName, messages: messages});
+        res.render('room', {room: roomName, messages: messages, user: req.user});
     });
 });
 
