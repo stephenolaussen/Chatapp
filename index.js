@@ -58,7 +58,8 @@ const messageSchema = new mongoose.Schema({
     sender: { type: String, required: true },
     color: { type: String, default: '#667eea' },
     timestamp: { type: Date, default: Date.now, index: true },
-    isSystemMessage: { type: Boolean, default: false }
+    isSystemMessage: { type: Boolean, default: false },
+    reactions: { type: Map, of: [String], default: new Map() } // Store reactions: { '👍': ['user1', 'user2'], '❤️': ['user1'] }
 });
 
 const Message = mongoose.model('Message', messageSchema);
@@ -535,6 +536,90 @@ admin.on('connection', (socket) => {
                     })}\n\n`);
                 });
             }
+        }
+    });
+
+    // Handle message reactions
+    socket.on('add reaction', async (data) => {
+        const { room, messageTime, emoji, user } = data;
+        
+        try {
+            if (mongoConnected && Message) {
+                // Find message by timestamp and update reactions
+                const message = await Message.findOne({ room: room, timestamp: new Date(messageTime) });
+                if (message) {
+                    if (!message.reactions) {
+                        message.reactions = new Map();
+                    }
+                    if (!message.reactions.get(emoji)) {
+                        message.reactions.set(emoji, []);
+                    }
+                    const users = message.reactions.get(emoji);
+                    if (!users.includes(user)) {
+                        users.push(user);
+                        
+                        // Send notification to the message sender if it's not the same person reacting
+                        if (message.sender !== user) {
+                            await sendPushNotificationToAll(
+                                `${emoji} ${user} liked your message`,
+                                {
+                                    body: message.text.substring(0, 60),
+                                    icon: '/icons/icon-192x192.png',
+                                    badge: '/icons/badge-72x72.png',
+                                    tag: `reaction-${room}-${message._id}`,
+                                    data: {
+                                        room: room,
+                                        type: 'reaction'
+                                    }
+                                }
+                            );
+                        }
+                    }
+                    await message.save();
+                    
+                    // Broadcast to all clients in room
+                    admin.in(room).emit('reaction updated', {
+                        messageTime,
+                        emoji,
+                        user,
+                        reactions: Object.fromEntries(message.reactions)
+                    });
+                }
+            }
+        } catch (e) {
+            console.log('Error adding reaction:', e);
+        }
+    });
+
+    // Handle reaction removal
+    socket.on('remove reaction', async (data) => {
+        const { room, messageTime, emoji, user } = data;
+        
+        try {
+            if (mongoConnected && Message) {
+                const message = await Message.findOne({ room: room, timestamp: new Date(messageTime) });
+                if (message && message.reactions && message.reactions.get(emoji)) {
+                    const users = message.reactions.get(emoji);
+                    const index = users.indexOf(user);
+                    if (index > -1) {
+                        users.splice(index, 1);
+                    }
+                    if (users.length === 0) {
+                        message.reactions.delete(emoji);
+                    }
+                    await message.save();
+                    
+                    // Broadcast to all clients in room
+                    admin.in(room).emit('reaction updated', {
+                        messageTime,
+                        emoji,
+                        user,
+                        reactions: Object.fromEntries(message.reactions)
+                    });
+                }
+            }
+        } catch (e) {
+            console.log('Error removing reaction:', e);
         }
     });
 

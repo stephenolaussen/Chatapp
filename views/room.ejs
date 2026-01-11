@@ -285,6 +285,104 @@
         opacity: 0.6;
       }
 
+      .message-reactions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+        align-items: center;
+      }
+
+      .reaction-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        background: rgba(0, 113, 227, 0.08);
+        border: 1px solid rgba(0, 113, 227, 0.2);
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.15s;
+        user-select: none;
+      }
+
+      .reaction-pill:hover {
+        background: rgba(0, 113, 227, 0.15);
+        border-color: rgba(0, 113, 227, 0.3);
+      }
+
+      .reaction-pill.active {
+        background: rgba(0, 113, 227, 0.25);
+        border-color: rgba(0, 113, 227, 0.5);
+      }
+
+      .reaction-emoji {
+        font-size: 0.95rem;
+      }
+
+      .reaction-count {
+        font-size: 0.8rem;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .add-reaction-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: rgba(0, 113, 227, 0.08);
+        border: 1px solid rgba(0, 113, 227, 0.2);
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.15s;
+        padding: 0;
+        margin-left: 0.2rem;
+      }
+
+      .add-reaction-btn:hover {
+        background: rgba(0, 113, 227, 0.15);
+      }
+
+      .reaction-picker {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        padding: 0.5rem;
+        display: none;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.3rem;
+        z-index: 1000;
+        margin-bottom: 0.5rem;
+        border: 1px solid #e5e5e7;
+      }
+
+      .reaction-picker.show {
+        display: grid;
+      }
+
+      .reaction-picker-emoji {
+        font-size: 1.3rem;
+        cursor: pointer;
+        padding: 0.4rem;
+        border-radius: 8px;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .reaction-picker-emoji:hover {
+        background: rgba(0, 113, 227, 0.1);
+        transform: scale(1.2);
+      }
+
       #form {
         background: white;
         padding: 1.2rem;
@@ -1364,6 +1462,13 @@
           }
           // Check if it's a message object or plain text
           else if (typeof data === 'object' && data.text) {
+            const reactionsHtml = data.reactions && Object.keys(data.reactions).length > 0 
+              ? `<div class="message-reactions" data-timestamp="${data.timestamp}">${Object.entries(data.reactions).map(([emoji, users]) => {
+                  const isActive = users.includes(currentUser.name);
+                  return `<span class="reaction-pill ${isActive ? 'active' : ''}" onclick="toggleReaction(event, '${emoji}')"><span class="reaction-emoji">${emoji}</span><span class="reaction-count">${users.length}</span></span>`;
+                }).join('')}<button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button></div>`
+              : `<div class="message-reactions" data-timestamp="${data.timestamp}"><button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button></div>`;
+            
             item.innerHTML = `
               <div class="message-sender">
                 <span>${data.sender || 'User'}</span>
@@ -1372,7 +1477,16 @@
                 <div>${data.text}</div>
                 <div class="message-time">${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</div>
               </div>
+              ${reactionsHtml}
+              <div class="reaction-picker" onclick="event.stopPropagation()">
+                <span class="reaction-picker-emoji" onclick="addReaction('👍', this)">👍</span>
+                <span class="reaction-picker-emoji" onclick="addReaction('❤️', this)">❤️</span>
+                <span class="reaction-picker-emoji" onclick="addReaction('😂', this)">😂</span>
+                <span class="reaction-picker-emoji" onclick="addReaction('🔥', this)">🔥</span>
+                <span class="reaction-picker-emoji" onclick="addReaction('😍', this)">😍</span>
+              </div>
             `;
+            item.dataset.messageTime = data.timestamp;
             if (data.sender === currentUser.name) {
               item.classList.add('own-message');
               // Add edit actions for own messages
@@ -1409,6 +1523,83 @@
         function scrollToBottom() {
           messagesList.scrollTop = messagesList.scrollHeight;
         }
+
+        // Toggle reaction picker
+        function toggleReactionPicker(event) {
+          event.stopPropagation();
+          const picker = event.target.closest('.message-reactions').querySelector('.reaction-picker');
+          // Close all other pickers
+          document.querySelectorAll('.reaction-picker.show').forEach(p => {
+            if (p !== picker) p.classList.remove('show');
+          });
+          picker.classList.toggle('show');
+        }
+
+        // Add reaction
+        function addReaction(emoji, element) {
+          const messageElement = element.closest('li');
+          const messageTime = messageElement.dataset.messageTime;
+          
+          socket.emit('add reaction', {
+            room: room,
+            messageTime: messageTime,
+            emoji: emoji,
+            user: currentUser.name
+          });
+          
+          element.closest('.reaction-picker').classList.remove('show');
+        }
+
+        // Toggle reaction (add or remove)
+        function toggleReaction(event, emoji) {
+          event.stopPropagation();
+          const messageElement = event.target.closest('li');
+          const messageTime = messageElement.dataset.messageTime;
+          const isActive = event.target.closest('.reaction-pill').classList.contains('active');
+          
+          if (isActive) {
+            socket.emit('remove reaction', {
+              room: room,
+              messageTime: messageTime,
+              emoji: emoji,
+              user: currentUser.name
+            });
+          } else {
+            socket.emit('add reaction', {
+              room: room,
+              messageTime: messageTime,
+              emoji: emoji,
+              user: currentUser.name
+            });
+          }
+        }
+
+        // Handle reaction updates
+        socket.on('reaction updated', function(data) {
+          // Find all messages with this timestamp and update reactions
+          document.querySelectorAll(`li[data-message-time="${data.messageTime}"] .message-reactions`).forEach(reactionsDiv => {
+            const picker = reactionsDiv.querySelector('.reaction-picker');
+            let html = '';
+            if (data.reactions && Object.keys(data.reactions).length > 0) {
+              html = Object.entries(data.reactions).map(([emoji, users]) => {
+                const isActive = users.includes(currentUser.name);
+                return `<span class="reaction-pill ${isActive ? 'active' : ''}" onclick="toggleReaction(event, '${emoji}')"><span class="reaction-emoji">${emoji}</span><span class="reaction-count">${users.length}</span></span>`;
+              }).join('');
+            }
+            html += '<button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button>';
+            reactionsDiv.innerHTML = html;
+            if (picker) {
+              reactionsDiv.appendChild(picker);
+            }
+          });
+        });
+
+        // Close reaction picker when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.reaction-picker') && !e.target.closest('.add-reaction-btn')) {
+            document.querySelectorAll('.reaction-picker.show').forEach(p => p.classList.remove('show'));
+          }
+        });
 
         socket.on('user joined', function(data) {
           onlineUsers[data.socketId] = {
