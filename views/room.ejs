@@ -2873,13 +2873,15 @@
           // Ball out of bounds
           if (pongGameState.ball.x < 0) {
             pongGameState.aiScore++;
-            const randomVx = -(2 + Math.random() * 2);
+            // Ball goes RIGHT (towards player) after AI scores
+            const randomVx = 2 + Math.random() * 2;
             const randomVy = (Math.random() - 0.5) * 4;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
           } else if (pongGameState.ball.x > pongGameState.canvas.width) {
             pongGameState.score++;
             document.getElementById('pongScore').textContent = pongGameState.score;
-            const randomVx = 2 + Math.random() * 2;
+            // Ball goes LEFT (towards AI) after player scores
+            const randomVx = -(2 + Math.random() * 2);
             const randomVy = (Math.random() - 0.5) * 4;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
           }
