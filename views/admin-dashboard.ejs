@@ -266,19 +266,12 @@
 
     <script>
         // Load whitelist on page load
-        console.log('Admin dashboard loaded, calling loadWhitelist...');
         loadWhitelist();
 
         function loadWhitelist() {
-            console.log('loadWhitelist() called');
             fetch('/api/admin/whitelist')
-                .then(res => {
-                    console.log('Response status:', res.status);
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(users => {
-                    console.log('Received users from API:', users);
-                    console.log('User count:', users.length);
                     const tbody = document.getElementById('userList');
                     const count = document.getElementById('userCount');
                     

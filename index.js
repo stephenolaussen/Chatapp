@@ -242,26 +242,17 @@ app.get('/admin/dashboard', (req, res) => {
 
 // API for admin to get whitelist
 app.get('/api/admin/whitelist', async (req, res) => {
-    console.log('DEBUG - Whitelist GET request');
-    console.log('adminAuth:', req.session.adminAuth);
-    
-    // Temporarily removing auth check for debugging
+    if (!req.session.adminAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
     try {
         if (mongoConnected && Whitelist) {
-            console.log('Whitelist model exists, querying...');
             const list = await Whitelist.find({}).sort({ addedAt: -1 });
-            console.log('Found whitelist items:', list.length);
-            console.log('Items:', JSON.stringify(list, null, 2));
             res.json(list);
         } else {
-            console.log('MongoDB not connected or Whitelist not defined');
-            console.log('mongoConnected:', mongoConnected);
-            console.log('Whitelist exists:', !!Whitelist);
             res.json([]);
         }
     } catch (err) {
-        console.log('Error:', err.message);
-        console.log('Error stack:', err.stack);
         res.status(500).json({ error: err.message });
     }
 });
@@ -278,7 +269,6 @@ app.post('/api/admin/whitelist/add', jsonParser, async (req, res) => {
         }
         
         if (!mongoConnected || !Whitelist) {
-            console.log('MongoDB not ready for add:', { mongoConnected, hasWhitelist: !!Whitelist });
             return res.status(500).json({ error: 'Database not ready' });
         }
         
@@ -289,10 +279,8 @@ app.post('/api/admin/whitelist/add', jsonParser, async (req, res) => {
         
         const newEntry = new Whitelist({ email: email.toLowerCase(), name });
         await newEntry.save();
-        console.log('Added to whitelist:', email);
         res.json({ success: true, data: newEntry });
     } catch (err) {
-        console.log('Error adding to whitelist:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -305,15 +293,12 @@ app.post('/api/admin/whitelist/remove', jsonParser, async (req, res) => {
     try {
         const { email } = req.body;
         if (!mongoConnected || !Whitelist) {
-            console.log('MongoDB not ready for remove:', { mongoConnected, hasWhitelist: !!Whitelist });
             return res.status(500).json({ error: 'Database not ready' });
         }
         
         await Whitelist.deleteOne({ email: email.toLowerCase() });
-        console.log('Removed from whitelist:', email);
         res.json({ success: true });
     } catch (err) {
-        console.log('Error removing from whitelist:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
