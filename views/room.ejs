@@ -2787,8 +2787,8 @@
           pongGameState.ball = {x: 200, y: 200, radius: 5, vx: 3, vy: 3};
           document.getElementById('pongScore').textContent = '0';
           
-          const isMobile = window.innerWidth <= 600;
-          document.getElementById('pongMobileControls').style.display = isMobile ? 'block' : 'none';
+          // Hide mobile control buttons - using mouse/touch following instead
+          document.getElementById('pongMobileControls').style.display = 'none';
           
           document.addEventListener('keydown', handlePongKeydown);
           document.addEventListener('keyup', handlePongKeyup);
@@ -2960,8 +2960,8 @@
           dodgeGameState.spawnTimer = 0;
           document.getElementById('dodgeScore').textContent = '0';
           
-          const isMobile = window.innerWidth <= 600;
-          document.getElementById('dodgeMobileControls').style.display = isMobile ? 'block' : 'none';
+          // Hide mobile control buttons - using mouse/touch following instead
+          document.getElementById('dodgeMobileControls').style.display = 'none';
           
           document.addEventListener('keydown', handleDodgeKeydown);
           document.addEventListener('keyup', handleDodgeKeyup);
