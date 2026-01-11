@@ -843,6 +843,31 @@
         background: #d1d5db;
       }
 
+      .btn-game-select {
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-game-select:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      #snakeCanvas {
+        border: 2px solid #667eea;
+        background: #f0f0f0;
+        border-radius: 8px;
+        margin: 1rem auto;
+        display: block;
+      }
+
       @media (max-width: 600px) {
         * {
           -webkit-touch-callout: none;
@@ -1045,25 +1070,66 @@
     <!-- Game Modal -->
     <div id="gameModal" class="game-modal">
       <div class="game-modal-content">
-        <h2>🎮 Flappy Bird</h2>
-        <canvas id="gameCanvas" width="400" height="300"></canvas>
-        <div class="game-stats">
-          <div class="game-stat">
-            <div class="game-stat-label">Score</div>
-            <div class="game-stat-value" id="gameScore">0</div>
+        <!-- Game Menu -->
+        <div id="gameMenu" style="display: block;">
+          <h2>🎮 Velg Spill</h2>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <button class="btn-game-select" onclick="selectGame('flappybird')">
+              🐦 Flappy Bird
+            </button>
+            <button class="btn-game-select" onclick="selectGame('snake')">
+              🐍 Snake
+            </button>
           </div>
-          <div class="game-stat">
-            <div class="game-stat-label">Highscore</div>
-            <div class="game-stat-value" id="gameHighscore">0</div>
+          <button class="btn-close-game" onclick="closeGameModal()" style="margin-top: 1rem; width: 100%;">Lukk</button>
+        </div>
+
+        <!-- Flappy Bird Game -->
+        <div id="flappybirdGame" style="display: none;">
+          <h2>🐦 Flappy Bird</h2>
+          <canvas id="gameCanvas" width="400" height="300"></canvas>
+          <div class="game-stats">
+            <div class="game-stat">
+              <div class="game-stat-label">Score</div>
+              <div class="game-stat-value" id="gameScore">0</div>
+            </div>
+            <div class="game-stat">
+              <div class="game-stat-label">Highscore</div>
+              <div class="game-stat-value" id="gameHighscore">0</div>
+            </div>
+          </div>
+          <div class="game-instructions">
+            <strong>Tap/Click to make the bird fly!</strong><br>
+            Avoid the pipes and get the highest score!
+          </div>
+          <div class="game-buttons">
+            <button class="btn-play" onclick="startGame()">Play</button>
+            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
           </div>
         </div>
-        <div class="game-instructions">
-          <strong>Tap/Click to make the bird fly!</strong><br>
-          Avoid the pipes and get the highest score!
-        </div>
-        <div class="game-buttons">
-          <button class="btn-play" onclick="startGame()">Play</button>
-          <button class="btn-close-game" onclick="closeGameModal()">Close</button>
+
+        <!-- Snake Game -->
+        <div id="snakeGame" style="display: none;">
+          <h2>🐍 Snake</h2>
+          <canvas id="snakeCanvas" width="400" height="400"></canvas>
+          <div class="game-stats">
+            <div class="game-stat">
+              <div class="game-stat-label">Score</div>
+              <div class="game-stat-value" id="snakeScore">0</div>
+            </div>
+            <div class="game-stat">
+              <div class="game-stat-label">Highscore</div>
+              <div class="game-stat-value" id="snakeHighscore">0</div>
+            </div>
+          </div>
+          <div class="game-instructions">
+            <strong>Arrow Keys or WASD to move</strong><br>
+            Eat the red square and grow!
+          </div>
+          <div class="game-buttons">
+            <button class="btn-play" onclick="startSnakeGame()">Play</button>
+            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1954,6 +2020,135 @@
           }, 10);
         });
 
+        // ============ SNAKE GAME ============
+        let snakeGameState = {
+          canvas: document.getElementById('snakeCanvas'),
+          ctx: null,
+          snake: [{x: 200, y: 200}],
+          food: {x: Math.floor(Math.random() * 20) * 20, y: Math.floor(Math.random() * 20) * 20},
+          direction: {x: 1, y: 0},
+          nextDirection: {x: 1, y: 0},
+          score: 0,
+          highscore: localStorage.getItem('snakeHighscore') || 0,
+          running: false,
+          gameRunning: false,
+          gridSize: 20
+        };
+
+        snakeGameState.ctx = snakeGameState.canvas.getContext('2d');
+
+        function startSnakeGame() {
+          snakeGameState.snake = [{x: 200, y: 200}];
+          snakeGameState.direction = {x: 1, y: 0};
+          snakeGameState.nextDirection = {x: 1, y: 0};
+          snakeGameState.score = 0;
+          snakeGameState.running = true;
+          snakeGameState.gameRunning = true;
+          document.getElementById('snakeScore').textContent = '0';
+          
+          // Setup keyboard controls
+          document.addEventListener('keydown', handleSnakeKeydown);
+          
+          snakeGameLoop();
+        }
+
+        function handleSnakeKeydown(e) {
+          if (!snakeGameState.running) return;
+          
+          const key = e.key.toLowerCase();
+          
+          // Prevent moving backwards into itself
+          if (key === 'arrowup' || key === 'w') {
+            if (snakeGameState.direction.y === 0) snakeGameState.nextDirection = {x: 0, y: -1};
+          } else if (key === 'arrowdown' || key === 's') {
+            if (snakeGameState.direction.y === 0) snakeGameState.nextDirection = {x: 0, y: 1};
+          } else if (key === 'arrowleft' || key === 'a') {
+            if (snakeGameState.direction.x === 0) snakeGameState.nextDirection = {x: -1, y: 0};
+          } else if (key === 'arrowright' || key === 'd') {
+            if (snakeGameState.direction.x === 0) snakeGameState.nextDirection = {x: 1, y: 0};
+          }
+        }
+
+        function snakeGameLoop() {
+          if (!snakeGameState.running) return;
+
+          // Update direction
+          snakeGameState.direction = snakeGameState.nextDirection;
+          
+          // Calculate new head position
+          const head = snakeGameState.snake[0];
+          const newHead = {
+            x: head.x + snakeGameState.direction.x * snakeGameState.gridSize,
+            y: head.y + snakeGameState.direction.y * snakeGameState.gridSize
+          };
+
+          // Check wall collision
+          if (newHead.x < 0 || newHead.x >= snakeGameState.canvas.width || 
+              newHead.y < 0 || newHead.y >= snakeGameState.canvas.height) {
+            endSnakeGame();
+            return;
+          }
+
+          // Check self collision
+          for (let segment of snakeGameState.snake) {
+            if (newHead.x === segment.x && newHead.y === segment.y) {
+              endSnakeGame();
+              return;
+            }
+          }
+
+          snakeGameState.snake.unshift(newHead);
+
+          // Check food collision
+          if (newHead.x === snakeGameState.food.x && newHead.y === snakeGameState.food.y) {
+            snakeGameState.score += 10;
+            document.getElementById('snakeScore').textContent = snakeGameState.score;
+            snakeGameState.food = {
+              x: Math.floor(Math.random() * (snakeGameState.canvas.width / snakeGameState.gridSize)) * snakeGameState.gridSize,
+              y: Math.floor(Math.random() * (snakeGameState.canvas.height / snakeGameState.gridSize)) * snakeGameState.gridSize
+            };
+          } else {
+            snakeGameState.snake.pop();
+          }
+
+          // Draw
+          snakeGameState.ctx.fillStyle = '#f0f0f0';
+          snakeGameState.ctx.fillRect(0, 0, snakeGameState.canvas.width, snakeGameState.canvas.height);
+
+          // Draw snake
+          snakeGameState.ctx.fillStyle = '#667eea';
+          for (let segment of snakeGameState.snake) {
+            snakeGameState.ctx.fillRect(segment.x, segment.y, snakeGameState.gridSize - 2, snakeGameState.gridSize - 2);
+          }
+
+          // Draw food
+          snakeGameState.ctx.fillStyle = '#FF6B6B';
+          snakeGameState.ctx.fillRect(snakeGameState.food.x, snakeGameState.food.y, snakeGameState.gridSize - 2, snakeGameState.gridSize - 2);
+
+          setTimeout(snakeGameLoop, 100);
+        }
+
+        function endSnakeGame() {
+          snakeGameState.running = false;
+          document.removeEventListener('keydown', handleSnakeKeydown);
+
+          if (snakeGameState.score > snakeGameState.highscore) {
+            snakeGameState.highscore = snakeGameState.score;
+            localStorage.setItem('snakeHighscore', snakeGameState.highscore);
+            document.getElementById('snakeHighscore').textContent = snakeGameState.highscore;
+            
+            // Send highscore to all users via Socket.io
+            const highscoreMessage = `🏆 ${currentUser.name} got a new Snake highscore: ${snakeGameState.score}!`;
+            socket.emit('chat message', { 
+              msg: highscoreMessage, 
+              room: <%=room%>,
+              sender: 'Game',
+              color: '#FFD700',
+              isSystemMessage: true
+            });
+          }
+        }
+
         // ============ FLAPPY BIRD GAME ============
         let gameState = {
           canvas: document.getElementById('gameCanvas'),
@@ -1988,12 +2183,36 @@
 
         function openGameModal() {
           document.getElementById('gameModal').classList.add('show');
+          document.getElementById('gameMenu').style.display = 'block';
+          document.getElementById('flappybirdGame').style.display = 'none';
+          document.getElementById('snakeGame').style.display = 'none';
           document.getElementById('gameHighscore').textContent = gameState.highscore;
+          document.getElementById('snakeHighscore').textContent = localStorage.getItem('snakeHighscore') || 0;
+        }
+
+        function selectGame(game) {
+          document.getElementById('gameMenu').style.display = 'none';
+          if (game === 'flappybird') {
+            document.getElementById('flappybirdGame').style.display = 'block';
+            document.getElementById('snakeGame').style.display = 'none';
+          } else if (game === 'snake') {
+            document.getElementById('snakeGame').style.display = 'block';
+            document.getElementById('flappybirdGame').style.display = 'none';
+          }
+        }
+
+        function backToGameMenu() {
+          document.getElementById('gameMenu').style.display = 'block';
+          document.getElementById('flappybirdGame').style.display = 'none';
+          document.getElementById('snakeGame').style.display = 'none';
+          gameState.gameRunning = false;
+          snakeGameState.running = false;
         }
 
         function closeGameModal() {
           document.getElementById('gameModal').classList.remove('show');
           gameState.gameRunning = false;
+          snakeGameState.running = false;
         }
 
         function drawBird() {
