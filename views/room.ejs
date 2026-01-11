@@ -1080,6 +1080,9 @@
             <button class="btn-game-select" onclick="selectGame('snake')">
               🐍 Snake
             </button>
+            <button class="btn-game-select" onclick="selectGame('bouncingball')">
+              🎾 Bouncing Ball
+            </button>
           </div>
           <button class="btn-close-game" onclick="closeGameModal()" style="margin-top: 1rem; width: 100%;">Lukk</button>
         </div>
@@ -1128,6 +1131,30 @@
           </div>
           <div class="game-buttons">
             <button class="btn-play" onclick="startSnakeGame()">Play</button>
+            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+          </div>
+        </div>
+
+        <!-- Bouncing Ball Game -->
+        <div id="bouncingBallGame" style="display: none;">
+          <h2>🎾 Bouncing Ball</h2>
+          <canvas id="ballCanvas" width="400" height="400"></canvas>
+          <div class="game-stats">
+            <div class="game-stat">
+              <div class="game-stat-label">Score</div>
+              <div class="game-stat-value" id="ballScore">0</div>
+            </div>
+            <div class="game-stat">
+              <div class="game-stat-label">Highscore</div>
+              <div class="game-stat-value" id="ballHighscore">0</div>
+            </div>
+          </div>
+          <div class="game-instructions">
+            <strong>Mouse/Touch to move paddle</strong><br>
+            Keep the ball from falling!
+          </div>
+          <div class="game-buttons">
+            <button class="btn-play" onclick="startBouncingBallGame()">Play</button>
             <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
           </div>
         </div>
@@ -2020,6 +2047,162 @@
           }, 10);
         });
 
+        // ============ BOUNCING BALL GAME ============
+        let ballGameState = {
+          canvas: document.getElementById('ballCanvas'),
+          ctx: null,
+          paddle: {x: 175, y: 380, width: 50, height: 10, speed: 8},
+          ball: {x: 200, y: 200, radius: 8, vx: 3, vy: -3},
+          score: 0,
+          highscore: localStorage.getItem('ballHighscore') || 0,
+          running: false,
+          gameRunning: false,
+          bricks: [],
+          brickRows: 3,
+          brickCols: 8
+        };
+
+        ballGameState.ctx = ballGameState.canvas.getContext('2d');
+
+        function initBallGame() {
+          ballGameState.bricks = [];
+          const brickWidth = ballGameState.canvas.width / ballGameState.brickCols;
+          const brickHeight = 20;
+          
+          for (let row = 0; row < ballGameState.brickRows; row++) {
+            for (let col = 0; col < ballGameState.brickCols; col++) {
+              ballGameState.bricks.push({
+                x: col * brickWidth,
+                y: row * brickHeight + 20,
+                width: brickWidth,
+                height: brickHeight,
+                active: true
+              });
+            }
+          }
+        }
+
+        function startBouncingBallGame() {
+          ballGameState.score = 0;
+          ballGameState.running = true;
+          ballGameState.gameRunning = true;
+          ballGameState.paddle = {x: 175, y: 380, width: 50, height: 10, speed: 8};
+          ballGameState.ball = {x: 200, y: 200, radius: 8, vx: 3, vy: -3};
+          document.getElementById('ballScore').textContent = '0';
+          
+          initBallGame();
+          
+          // Mouse/touch tracking
+          document.addEventListener('mousemove', handleBallMouseMove);
+          document.addEventListener('touchmove', handleBallTouchMove);
+          
+          ballGameLoop();
+        }
+
+        function handleBallMouseMove(e) {
+          if (!ballGameState.running) return;
+          const rect = ballGameState.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          ballGameState.paddle.x = Math.max(0, Math.min(x - ballGameState.paddle.width / 2, ballGameState.canvas.width - ballGameState.paddle.width));
+        }
+
+        function handleBallTouchMove(e) {
+          if (!ballGameState.running) return;
+          const rect = ballGameState.canvas.getBoundingClientRect();
+          const x = e.touches[0].clientX - rect.left;
+          ballGameState.paddle.x = Math.max(0, Math.min(x - ballGameState.paddle.width / 2, ballGameState.canvas.width - ballGameState.paddle.width));
+        }
+
+        function ballGameLoop() {
+          if (!ballGameState.running) return;
+
+          // Update ball position
+          ballGameState.ball.x += ballGameState.ball.vx;
+          ballGameState.ball.y += ballGameState.ball.vy;
+
+          // Bounce off walls
+          if (ballGameState.ball.x - ballGameState.ball.radius < 0 || ballGameState.ball.x + ballGameState.ball.radius > ballGameState.canvas.width) {
+            ballGameState.ball.vx = -ballGameState.ball.vx;
+          }
+          if (ballGameState.ball.y - ballGameState.ball.radius < 0) {
+            ballGameState.ball.vy = -ballGameState.ball.vy;
+          }
+
+          // Ball hit bottom - game over
+          if (ballGameState.ball.y > ballGameState.canvas.height) {
+            endBouncingBallGame();
+            return;
+          }
+
+          // Check paddle collision
+          if (ballGameState.ball.y + ballGameState.ball.radius > ballGameState.paddle.y &&
+              ballGameState.ball.y - ballGameState.ball.radius < ballGameState.paddle.y + ballGameState.paddle.height &&
+              ballGameState.ball.x > ballGameState.paddle.x &&
+              ballGameState.ball.x < ballGameState.paddle.x + ballGameState.paddle.width) {
+            ballGameState.ball.vy = -ballGameState.ball.vy;
+            ballGameState.ball.y = ballGameState.paddle.y - ballGameState.ball.radius;
+          }
+
+          // Check brick collisions
+          for (let brick of ballGameState.bricks) {
+            if (!brick.active) continue;
+            
+            if (ballGameState.ball.x > brick.x && ballGameState.ball.x < brick.x + brick.width &&
+                ballGameState.ball.y > brick.y && ballGameState.ball.y < brick.y + brick.height) {
+              brick.active = false;
+              ballGameState.score += 10;
+              document.getElementById('ballScore').textContent = ballGameState.score;
+              ballGameState.ball.vy = -ballGameState.ball.vy;
+            }
+          }
+
+          // Draw
+          ballGameState.ctx.fillStyle = '#f0f0f0';
+          ballGameState.ctx.fillRect(0, 0, ballGameState.canvas.width, ballGameState.canvas.height);
+
+          // Draw bricks
+          for (let brick of ballGameState.bricks) {
+            if (brick.active) {
+              ballGameState.ctx.fillStyle = '#667eea';
+              ballGameState.ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+            }
+          }
+
+          // Draw paddle
+          ballGameState.ctx.fillStyle = '#764ba2';
+          ballGameState.ctx.fillRect(ballGameState.paddle.x, ballGameState.paddle.y, ballGameState.paddle.width, ballGameState.paddle.height);
+
+          // Draw ball
+          ballGameState.ctx.fillStyle = '#FF6B6B';
+          ballGameState.ctx.beginPath();
+          ballGameState.ctx.arc(ballGameState.ball.x, ballGameState.ball.y, ballGameState.ball.radius, 0, Math.PI * 2);
+          ballGameState.ctx.fill();
+
+          requestAnimationFrame(ballGameLoop);
+        }
+
+        function endBouncingBallGame() {
+          ballGameState.running = false;
+          document.removeEventListener('mousemove', handleBallMouseMove);
+          document.removeEventListener('touchmove', handleBallTouchMove);
+
+          if (ballGameState.score > ballGameState.highscore) {
+            ballGameState.highscore = ballGameState.score;
+            localStorage.setItem('ballHighscore', ballGameState.highscore);
+            document.getElementById('ballHighscore').textContent = ballGameState.highscore;
+            
+            // Send highscore to all users via Socket.io
+            const highscoreMessage = `🏆 ${currentUser.name} got a new Bouncing Ball highscore: ${ballGameState.score}!`;
+            socket.emit('chat message', { 
+              msg: highscoreMessage, 
+              room,
+              sender: 'Game',
+              color: '#FFD700',
+              isSystemMessage: true
+            });
+          }
+        }
+
         // ============ SNAKE GAME ============
         let snakeGameState = {
           canvas: document.getElementById('snakeCanvas'),
@@ -2141,7 +2324,7 @@
             const highscoreMessage = `🏆 ${currentUser.name} got a new Snake highscore: ${snakeGameState.score}!`;
             socket.emit('chat message', { 
               msg: highscoreMessage, 
-              room: <%=room%>,
+              room,
               sender: 'Game',
               color: '#FFD700',
               isSystemMessage: true
@@ -2186,8 +2369,10 @@
           document.getElementById('gameMenu').style.display = 'block';
           document.getElementById('flappybirdGame').style.display = 'none';
           document.getElementById('snakeGame').style.display = 'none';
+          document.getElementById('bouncingBallGame').style.display = 'none';
           document.getElementById('gameHighscore').textContent = gameState.highscore;
           document.getElementById('snakeHighscore').textContent = localStorage.getItem('snakeHighscore') || 0;
+          document.getElementById('ballHighscore').textContent = localStorage.getItem('ballHighscore') || 0;
         }
 
         function selectGame(game) {
@@ -2195,9 +2380,15 @@
           if (game === 'flappybird') {
             document.getElementById('flappybirdGame').style.display = 'block';
             document.getElementById('snakeGame').style.display = 'none';
+            document.getElementById('bouncingBallGame').style.display = 'none';
           } else if (game === 'snake') {
             document.getElementById('snakeGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
+            document.getElementById('bouncingBallGame').style.display = 'none';
+          } else if (game === 'bouncingball') {
+            document.getElementById('bouncingBallGame').style.display = 'block';
+            document.getElementById('flappybirdGame').style.display = 'none';
+            document.getElementById('snakeGame').style.display = 'none';
           }
         }
 
@@ -2205,14 +2396,17 @@
           document.getElementById('gameMenu').style.display = 'block';
           document.getElementById('flappybirdGame').style.display = 'none';
           document.getElementById('snakeGame').style.display = 'none';
+          document.getElementById('bouncingBallGame').style.display = 'none';
           gameState.gameRunning = false;
           snakeGameState.running = false;
+          ballGameState.running = false;
         }
 
         function closeGameModal() {
           document.getElementById('gameModal').classList.remove('show');
           gameState.gameRunning = false;
           snakeGameState.running = false;
+          ballGameState.running = false;
         }
 
         function drawBird() {
