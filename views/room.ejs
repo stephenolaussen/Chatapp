@@ -2753,8 +2753,24 @@
           
           document.addEventListener('keydown', handlePongKeydown);
           document.addEventListener('keyup', handlePongKeyup);
+          document.addEventListener('mousemove', handlePongMouseMove);
+          document.addEventListener('touchmove', handlePongTouchMove);
           
           pongGameLoop();
+        }
+
+        function handlePongMouseMove(e) {
+          if (!pongGameState.running) return;
+          const rect = pongGameState.canvas.getBoundingClientRect();
+          const y = e.clientY - rect.top;
+          pongGameState.playerPaddle.y = Math.max(0, Math.min(y - pongGameState.playerPaddle.height / 2, pongGameState.canvas.height - pongGameState.playerPaddle.height));
+        }
+
+        function handlePongTouchMove(e) {
+          if (!pongGameState.running) return;
+          const rect = pongGameState.canvas.getBoundingClientRect();
+          const y = e.touches[0].clientY - rect.top;
+          pongGameState.playerPaddle.y = Math.max(0, Math.min(y - pongGameState.playerPaddle.height / 2, pongGameState.canvas.height - pongGameState.playerPaddle.height));
         }
 
         function handlePongKeydown(e) {
@@ -2859,6 +2875,8 @@
           pongGameState.running = false;
           document.removeEventListener('keydown', handlePongKeydown);
           document.removeEventListener('keyup', handlePongKeyup);
+          document.removeEventListener('mousemove', handlePongMouseMove);
+          document.removeEventListener('touchmove', handlePongTouchMove);
 
           if (pongGameState.score > pongGameState.highscore) {
             pongGameState.highscore = pongGameState.score;
@@ -2908,8 +2926,24 @@
           
           document.addEventListener('keydown', handleDodgeKeydown);
           document.addEventListener('keyup', handleDodgeKeyup);
+          document.addEventListener('mousemove', handleDodgeMouseMove);
+          document.addEventListener('touchmove', handleDodgeTouchMove);
           
           dodgeGameLoop();
+        }
+
+        function handleDodgeMouseMove(e) {
+          if (!dodgeGameState.running) return;
+          const rect = dodgeGameState.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          dodgeGameState.player.x = Math.max(0, Math.min(x - dodgeGameState.player.width / 2, dodgeGameState.canvas.width - dodgeGameState.player.width));
+        }
+
+        function handleDodgeTouchMove(e) {
+          if (!dodgeGameState.running) return;
+          const rect = dodgeGameState.canvas.getBoundingClientRect();
+          const x = e.touches[0].clientX - rect.left;
+          dodgeGameState.player.x = Math.max(0, Math.min(x - dodgeGameState.player.width / 2, dodgeGameState.canvas.width - dodgeGameState.player.width));
         }
 
         function handleDodgeKeydown(e) {
@@ -2996,6 +3030,8 @@
           dodgeGameState.running = false;
           document.removeEventListener('keydown', handleDodgeKeydown);
           document.removeEventListener('keyup', handleDodgeKeyup);
+          document.removeEventListener('mousemove', handleDodgeMouseMove);
+          document.removeEventListener('touchmove', handleDodgeTouchMove);
 
           if (dodgeGameState.score > dodgeGameState.highscore) {
             dodgeGameState.highscore = dodgeGameState.score;
