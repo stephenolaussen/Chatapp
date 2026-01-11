@@ -214,7 +214,7 @@ app.get('/logout', (req, res) => {
 
 // Admin panel routes
 app.get('/admin', (req, res) => {
-    res.render('admin-login');
+    res.render('admin-login', { error: null });
 });
 
 app.post('/admin/login', jsonParser, (req, res) => {
