@@ -224,6 +224,11 @@ app.get('/admin', (req, res) => {
 
 app.post('/admin/login', jsonParser, (req, res) => {
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    console.log('DEBUG - Admin Login Attempt');
+    console.log('Submitted password:', JSON.stringify(req.body.password));
+    console.log('Stored password:', JSON.stringify(adminPassword));
+    console.log('Password length - submitted:', req.body.password ? req.body.password.length : 0);
+    console.log('Password length - stored:', adminPassword ? adminPassword.length : 0);
     if (req.body.password === adminPassword) {
         req.session.adminAuth = true;
         res.redirect('/admin/dashboard');
