@@ -349,7 +349,7 @@
 
       .reaction-picker {
         position: absolute;
-        bottom: 100%;
+        bottom: calc(100% + 5px);
         left: 0;
         background: white;
         border-radius: 12px;
@@ -359,8 +359,8 @@
         grid-template-columns: repeat(5, 1fr);
         gap: 0.3rem;
         z-index: 1000;
-        margin-bottom: 0.5rem;
         border: 1px solid #e5e5e7;
+        white-space: nowrap;
       }
 
       .reaction-picker.show {
@@ -1463,11 +1463,30 @@
           // Check if it's a message object or plain text
           else if (typeof data === 'object' && data.text) {
             const reactionsHtml = data.reactions && Object.keys(data.reactions).length > 0 
-              ? `<div class="message-reactions" data-timestamp="${data.timestamp}">${Object.entries(data.reactions).map(([emoji, users]) => {
-                  const isActive = users.includes(currentUser.name);
-                  return `<span class="reaction-pill ${isActive ? 'active' : ''}" onclick="toggleReaction(event, '${emoji}')"><span class="reaction-emoji">${emoji}</span><span class="reaction-count">${users.length}</span></span>`;
-                }).join('')}<button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button></div>`
-              : `<div class="message-reactions" data-timestamp="${data.timestamp}"><button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button></div>`;
+              ? `<div class="message-reactions" data-timestamp="${data.timestamp}" style="position: relative;">
+                   ${Object.entries(data.reactions).map(([emoji, users]) => {
+                     const isActive = users.includes(currentUser.name);
+                     return `<span class="reaction-pill ${isActive ? 'active' : ''}" onclick="toggleReaction(event, '${emoji}')"><span class="reaction-emoji">${emoji}</span><span class="reaction-count">${users.length}</span></span>`;
+                   }).join('')}
+                   <button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button>
+                   <div class="reaction-picker" onclick="event.stopPropagation()">
+                     <span class="reaction-picker-emoji" onclick="addReaction('👍', this)">👍</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('❤️', this)">❤️</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('😂', this)">😂</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('🔥', this)">🔥</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('😍', this)">😍</span>
+                   </div>
+                 </div>`
+              : `<div class="message-reactions" data-timestamp="${data.timestamp}" style="position: relative;">
+                   <button class="add-reaction-btn" onclick="toggleReactionPicker(event)" title="Add reaction">➕</button>
+                   <div class="reaction-picker" onclick="event.stopPropagation()">
+                     <span class="reaction-picker-emoji" onclick="addReaction('👍', this)">👍</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('❤️', this)">❤️</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('😂', this)">😂</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('🔥', this)">🔥</span>
+                     <span class="reaction-picker-emoji" onclick="addReaction('😍', this)">😍</span>
+                   </div>
+                 </div>`;
             
             item.innerHTML = `
               <div class="message-sender">
@@ -1478,13 +1497,6 @@
                 <div class="message-time">${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</div>
               </div>
               ${reactionsHtml}
-              <div class="reaction-picker" onclick="event.stopPropagation()">
-                <span class="reaction-picker-emoji" onclick="addReaction('👍', this)">👍</span>
-                <span class="reaction-picker-emoji" onclick="addReaction('❤️', this)">❤️</span>
-                <span class="reaction-picker-emoji" onclick="addReaction('😂', this)">😂</span>
-                <span class="reaction-picker-emoji" onclick="addReaction('🔥', this)">🔥</span>
-                <span class="reaction-picker-emoji" onclick="addReaction('😍', this)">😍</span>
-              </div>
             `;
             item.dataset.messageTime = data.timestamp;
             if (data.sender === currentUser.name) {

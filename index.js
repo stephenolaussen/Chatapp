@@ -377,9 +377,24 @@ rooms.forEach(room => {
     });
 });
 
+// Rate limiting for password attempts
+const passwordAttempts = {}; // Track attempts: { 'ip:room': { count: 0, resetTime: 0 } }
+
 // Password verification endpoint
 app.post('/verify-password', jsonParser, (req, res) => {
     const { room, password } = req.body;
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const key = `${clientIp}:${room}`;
+    
+    // Rate limiting: max 5 attempts per room per IP per 15 minutes
+    if (passwordAttempts[key] && passwordAttempts[key].resetTime > Date.now()) {
+        if (passwordAttempts[key].count >= 5) {
+            return res.json({ success: false, message: 'Too many attempts. Try again later.' });
+        }
+    } else {
+        passwordAttempts[key] = { count: 0, resetTime: Date.now() + 15 * 60 * 1000 };
+    }
+    
     const roomInfo = getRoomInfo(room);
     
     if (!roomInfo) {
@@ -389,8 +404,12 @@ app.post('/verify-password', jsonParser, (req, res) => {
     // Check if room requires password
     if (roomInfo.password) {
         if (password === roomInfo.password) {
+            // Clear attempts on successful login
+            delete passwordAttempts[key];
             res.json({ success: true });
         } else {
+            // Increment failed attempt counter
+            passwordAttempts[key].count++;
             res.json({ success: false, message: 'Incorrect password' });
         }
     } else {
