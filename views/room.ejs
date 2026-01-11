@@ -1852,20 +1852,26 @@
         });
 
         socket.on('user joined', function(data) {
-          onlineUsers[data.socketId] = {
-            name: data.name,
-            color: data.color
-          };
-          updateUserList();
+          // Only add if not already in list (prevent duplicates on reconnect)
+          if (!onlineUsers[data.socketId]) {
+            onlineUsers[data.socketId] = {
+              name: data.name,
+              color: data.color
+            };
+            updateUserList();
+          }
         });
 
         socket.on('user left', function(data) {
-          delete onlineUsers[data.socketId];
-          updateUserList();
+          if (onlineUsers[data.socketId]) {
+            delete onlineUsers[data.socketId];
+            updateUserList();
+          }
         });
 
         socket.on('users list', function(data) {
-          onlineUsers = data;
+          // Replace entire list - this is the authoritative list from server
+          onlineUsers = data || {};
           updateUserList();
         });
 
