@@ -1851,17 +1851,6 @@
           }
         });
 
-        socket.on('user joined', function(data) {
-          // Only add if not already in list (prevent duplicates on reconnect)
-          if (!onlineUsers[data.socketId]) {
-            onlineUsers[data.socketId] = {
-              name: data.name,
-              color: data.color
-            };
-            updateUserList();
-          }
-        });
-
         socket.on('user left', function(data) {
           if (onlineUsers[data.socketId]) {
             delete onlineUsers[data.socketId];
@@ -1870,7 +1859,7 @@
         });
 
         socket.on('users list', function(data) {
-          // Replace entire list - this is the authoritative list from server
+          // Single source of truth from server - replace entire list
           onlineUsers = data || {};
           updateUserList();
         });

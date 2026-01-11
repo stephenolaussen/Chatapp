@@ -702,16 +702,9 @@ admin.on('connection', (socket) => {
             // Database error - continue anyway
         }
 
-        // Send updated user list to all in room
+        // Send updated user list to all in room (single source of truth)
         const usersList = roomUsers[data.room];
         admin.in(data.room).emit('users list', usersList);
-        
-        // Notify others that user joined
-        admin.in(data.room).emit('user joined', {
-            socketId: socket.id,
-            name: data.name || 'User',
-            color: data.color || '#667eea'
-        });
     })
 
     socket.on('chat message', async (data) => {
