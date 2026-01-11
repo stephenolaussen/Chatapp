@@ -2381,7 +2381,46 @@
           // Setup keyboard controls
           document.addEventListener('keydown', handleSnakeKeydown);
           
+          // Setup swipe controls for mobile
+          let touchStartX = 0;
+          let touchStartY = 0;
+          
+          document.addEventListener('touchstart', (e) => {
+            if (!snakeGameState.running) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          });
+          
+          document.addEventListener('touchend', (e) => {
+            if (!snakeGameState.running) return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            handleSnakeSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+          });
+          
           snakeGameLoop();
+        }
+
+        function handleSnakeSwipe(startX, startY, endX, endY) {
+          const deltaX = endX - startX;
+          const deltaY = endY - startY;
+          const minSwipeDistance = 30;
+
+          if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // Horizontal swipe
+            if (deltaX > minSwipeDistance && snakeGameState.direction.x === 0) {
+              snakeGameState.nextDirection = {x: 1, y: 0}; // Right
+            } else if (deltaX < -minSwipeDistance && snakeGameState.direction.x === 0) {
+              snakeGameState.nextDirection = {x: -1, y: 0}; // Left
+            }
+          } else {
+            // Vertical swipe
+            if (deltaY > minSwipeDistance && snakeGameState.direction.y === 0) {
+              snakeGameState.nextDirection = {x: 0, y: 1}; // Down
+            } else if (deltaY < -minSwipeDistance && snakeGameState.direction.y === 0) {
+              snakeGameState.nextDirection = {x: 0, y: -1}; // Up
+            }
+          }
         }
 
         function handleSnakeMobileControl(direction) {
