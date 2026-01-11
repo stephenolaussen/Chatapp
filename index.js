@@ -277,17 +277,22 @@ app.post('/api/admin/whitelist/add', jsonParser, async (req, res) => {
             return res.status(400).json({ error: 'Email required' });
         }
         
-        if (mongoConnected && Whitelist) {
-            const existing = await Whitelist.findOne({ email: email.toLowerCase() });
-            if (existing) {
-                return res.status(400).json({ error: 'Email already in whitelist' });
-            }
-            
-            const newEntry = new Whitelist({ email: email.toLowerCase(), name });
-            await newEntry.save();
-            res.json({ success: true, data: newEntry });
+        if (!mongoConnected || !Whitelist) {
+            console.log('MongoDB not ready for add:', { mongoConnected, hasWhitelist: !!Whitelist });
+            return res.status(500).json({ error: 'Database not ready' });
         }
+        
+        const existing = await Whitelist.findOne({ email: email.toLowerCase() });
+        if (existing) {
+            return res.status(400).json({ error: 'Email already in whitelist' });
+        }
+        
+        const newEntry = new Whitelist({ email: email.toLowerCase(), name });
+        await newEntry.save();
+        console.log('Added to whitelist:', email);
+        res.json({ success: true, data: newEntry });
     } catch (err) {
+        console.log('Error adding to whitelist:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -299,11 +304,16 @@ app.post('/api/admin/whitelist/remove', jsonParser, async (req, res) => {
     }
     try {
         const { email } = req.body;
-        if (mongoConnected && Whitelist) {
-            await Whitelist.deleteOne({ email: email.toLowerCase() });
-            res.json({ success: true });
+        if (!mongoConnected || !Whitelist) {
+            console.log('MongoDB not ready for remove:', { mongoConnected, hasWhitelist: !!Whitelist });
+            return res.status(500).json({ error: 'Database not ready' });
         }
+        
+        await Whitelist.deleteOne({ email: email.toLowerCase() });
+        console.log('Removed from whitelist:', email);
+        res.json({ success: true });
     } catch (err) {
+        console.log('Error removing from whitelist:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
