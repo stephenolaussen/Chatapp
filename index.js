@@ -242,17 +242,25 @@ app.get('/admin/dashboard', (req, res) => {
 
 // API for admin to get whitelist
 app.get('/api/admin/whitelist', async (req, res) => {
+    console.log('DEBUG - Whitelist GET request');
+    console.log('adminAuth:', req.session.adminAuth);
+    console.log('session:', req.session);
+    
     if (!req.session.adminAuth) {
+        console.log('Rejecting - no adminAuth');
         return res.status(401).json({ error: 'Unauthorized' });
     }
     try {
         if (mongoConnected && Whitelist) {
             const list = await Whitelist.find({}).sort({ addedAt: -1 });
+            console.log('Found whitelist items:', list.length);
             res.json(list);
         } else {
+            console.log('MongoDB not connected or Whitelist not defined');
             res.json([]);
         }
     } catch (err) {
+        console.log('Error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
