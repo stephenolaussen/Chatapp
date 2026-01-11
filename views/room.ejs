@@ -2784,7 +2784,9 @@
           pongGameState.playerDir = 0;
           pongGameState.playerPaddle = {x: 10, y: 175, width: 10, height: 50, speed: 5};
           pongGameState.aiPaddle = {x: 380, y: 175, width: 10, height: 50, speed: 4};
-          pongGameState.ball = {x: 200, y: 200, radius: 5, vx: 3, vy: 3};
+          const randomVx = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2);
+          const randomVy = (Math.random() - 0.5) * 4;
+          pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
           document.getElementById('pongScore').textContent = '0';
           
           // Hide mobile control buttons - using mouse/touch following instead
@@ -2871,11 +2873,15 @@
           // Ball out of bounds
           if (pongGameState.ball.x < 0) {
             pongGameState.aiScore++;
-            pongGameState.ball = {x: 200, y: 200, radius: 5, vx: 3, vy: 3};
+            const randomVx = -(2 + Math.random() * 2);
+            const randomVy = (Math.random() - 0.5) * 4;
+            pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
           } else if (pongGameState.ball.x > pongGameState.canvas.width) {
             pongGameState.score++;
             document.getElementById('pongScore').textContent = pongGameState.score;
-            pongGameState.ball = {x: 200, y: 200, radius: 5, vx: -3, vy: 3};
+            const randomVx = 2 + Math.random() * 2;
+            const randomVy = (Math.random() - 0.5) * 4;
+            pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
           }
 
           if (pongGameState.aiScore >= 5) {
