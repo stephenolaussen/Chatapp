@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-10-4';
+const CACHE_NAME = 'familieskatt-v1-10-5';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -126,7 +126,10 @@ function startContinuousPolling() {
                 
                 // Only show if message is newer than last check time AND not from current user
                 // AND page is not visible (don't notify if app is active)
-                if (msgTime > lastCheckedTime[roomName] && msg.sender !== currentUser && !pageIsVisible) {
+                // Get current user name (handle both string and object formats)
+                const currentUserName = typeof currentUser === 'string' ? currentUser : (currentUser && currentUser.name ? currentUser.name : null);
+                
+                if (msgTime > lastCheckedTime[roomName] && msg.sender !== currentUserName && !pageIsVisible) {
                   console.log('SW: Showing notification from', msg.sender, 'in room', roomName);
                   
                   // Increment unread count
