@@ -46,7 +46,7 @@ if (vapidPublic && vapidPrivate) {
 
 if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI).then(() => {
-        console.log('✅ Connected to MongoDB');
+        console.log('✅ OAuth Login Ready - v2.0.2');
         mongoConnected = true;
     }).catch(err => {
         console.error('❌ Failed to connect to MongoDB:', err.message);
