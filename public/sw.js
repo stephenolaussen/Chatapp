@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v1-10-5';
+const CACHE_NAME = 'familieskatt-v1-10-6';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -88,7 +88,7 @@ let currentUser = null;
 let lastCheckedTime = {};
 let pollingIntervals = {}; // One interval per room
 let allRoomsData = {}; // Store all rooms to poll from
-let pageIsVisible = true; // Track if page is visible (assume hidden for safety)
+let pageIsVisible = false; // Track if page is visible (assume hidden for safety - only show notifications when page is hidden)
 let unreadCount = 0; // Track unread notifications
 let lastActivityTime = Date.now(); // Track last activity
 
