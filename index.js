@@ -715,16 +715,22 @@ admin.on('connection', (socket) => {
     })
 
     socket.on('chat message', async (data) => {
-        // Handle system messages (like highscores)
+        // Handle system messages (like highscores) - but save them to database
         if (data.isSystemMessage) {
-            // Don't save system messages to database, just broadcast them
-            admin.in(data.room).emit('chat message', {
+            // Save system messages that are highscores
+            const messageData = {
                 text: data.msg,
                 sender: data.sender || 'System',
                 color: data.color || '#FFD700',
                 isSystemMessage: true,
                 timestamp: new Date()
-            });
+            };
+            
+            // Save to MongoDB
+            await saveRoomMessage(data.room, messageData);
+            
+            // Broadcast to all clients in the room
+            admin.in(data.room).emit('chat message', messageData);
             
             // Send via SSE for background notifications
             if (sseClients[data.room]) {
