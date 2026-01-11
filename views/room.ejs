@@ -882,6 +882,28 @@
         height: auto;
       }
 
+      #pongCanvas {
+        border: 2px solid #43e97b;
+        background: #f0f0f0;
+        border-radius: 8px;
+        margin: 1rem auto;
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+      }
+
+      #dodgeCanvas {
+        border: 2px solid #fa709a;
+        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 8px;
+        margin: 1rem auto;
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+      }
+
       @media (max-width: 600px) {
         * {
           -webkit-touch-callout: none;
@@ -1127,6 +1149,12 @@
             <button class="btn-game-select" onclick="selectGame('bouncingball')">
               🎾 Bouncing Ball
             </button>
+            <button class="btn-game-select" onclick="selectGame('pong')">
+              🏓 Pong
+            </button>
+            <button class="btn-game-select" onclick="selectGame('dodge')">
+              🚗 Dodge
+            </button>
           </div>
           <button class="btn-close-game" onclick="closeGameModal()" style="margin-top: 1rem; width: 100%;">Lukk</button>
         </div>
@@ -1210,6 +1238,68 @@
           </div>
           <div class="game-buttons">
             <button class="btn-play" onclick="startBouncingBallGame()">Play</button>
+            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+          </div>
+        </div>
+
+        <!-- Pong Game -->
+        <div id="pongGame" style="display: none;">
+          <h2>🏓 Pong</h2>
+          <canvas id="pongCanvas" width="400" height="400"></canvas>
+          <div class="game-stats">
+            <div class="game-stat">
+              <div class="game-stat-label">Score</div>
+              <div class="game-stat-value" id="pongScore">0</div>
+            </div>
+            <div class="game-stat">
+              <div class="game-stat-label">Highscore</div>
+              <div class="game-stat-value" id="pongHighscore">0</div>
+            </div>
+          </div>
+          <div class="game-instructions">
+            <strong>Arrow Keys or W/S to move paddle</strong><br>
+            Beat the AI! Score by making them miss!
+          </div>
+          <!-- Mobile Controls -->
+          <div id="pongMobileControls" style="display: none; margin: 1rem 0;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; max-width: 150px; margin: 0 auto;">
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handlePongMobileControl('up')">⬆️ UP</button>
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handlePongMobileControl('down')">⬇️ DOWN</button>
+            </div>
+          </div>
+          <div class="game-buttons">
+            <button class="btn-play" onclick="startPongGame()">Play</button>
+            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+          </div>
+        </div>
+
+        <!-- Dodge Game -->
+        <div id="dodgeGame" style="display: none;">
+          <h2>🚗 Dodge</h2>
+          <canvas id="dodgeCanvas" width="400" height="400"></canvas>
+          <div class="game-stats">
+            <div class="game-stat">
+              <div class="game-stat-label">Score</div>
+              <div class="game-stat-value" id="dodgeScore">0</div>
+            </div>
+            <div class="game-stat">
+              <div class="game-stat-label">Highscore</div>
+              <div class="game-stat-value" id="dodgeHighscore">0</div>
+            </div>
+          </div>
+          <div class="game-instructions">
+            <strong>Arrow Keys or A/D to move</strong><br>
+            Dodge the obstacles! Collect power-ups!
+          </div>
+          <!-- Mobile Controls -->
+          <div id="dodgeMobileControls" style="display: none; margin: 1rem 0;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; max-width: 150px; margin: 0 auto;">
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleDodgeMobileControl('left')">⬅️ LEFT</button>
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleDodgeMobileControl('right')">➡️ RIGHT</button>
+            </div>
+          </div>
+          <div class="game-buttons">
+            <button class="btn-play" onclick="startDodgeGame()">Play</button>
             <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
           </div>
         </div>
@@ -2444,9 +2534,13 @@
           document.getElementById('flappybirdGame').style.display = 'none';
           document.getElementById('snakeGame').style.display = 'none';
           document.getElementById('bouncingBallGame').style.display = 'none';
+          document.getElementById('pongGame').style.display = 'none';
+          document.getElementById('dodgeGame').style.display = 'none';
           document.getElementById('gameHighscore').textContent = gameState.highscore;
           document.getElementById('snakeHighscore').textContent = localStorage.getItem('snakeHighscore') || 0;
           document.getElementById('ballHighscore').textContent = localStorage.getItem('ballHighscore') || 0;
+          document.getElementById('pongHighscore').textContent = localStorage.getItem('pongHighscore') || 0;
+          document.getElementById('dodgeHighscore').textContent = localStorage.getItem('dodgeHighscore') || 0;
         }
 
         function selectGame(game) {
@@ -2455,14 +2549,32 @@
             document.getElementById('flappybirdGame').style.display = 'block';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
+            document.getElementById('pongGame').style.display = 'none';
+            document.getElementById('dodgeGame').style.display = 'none';
           } else if (game === 'snake') {
             document.getElementById('snakeGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
+            document.getElementById('pongGame').style.display = 'none';
+            document.getElementById('dodgeGame').style.display = 'none';
           } else if (game === 'bouncingball') {
             document.getElementById('bouncingBallGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
+            document.getElementById('pongGame').style.display = 'none';
+            document.getElementById('dodgeGame').style.display = 'none';
+          } else if (game === 'pong') {
+            document.getElementById('pongGame').style.display = 'block';
+            document.getElementById('flappybirdGame').style.display = 'none';
+            document.getElementById('snakeGame').style.display = 'none';
+            document.getElementById('bouncingBallGame').style.display = 'none';
+            document.getElementById('dodgeGame').style.display = 'none';
+          } else if (game === 'dodge') {
+            document.getElementById('dodgeGame').style.display = 'block';
+            document.getElementById('flappybirdGame').style.display = 'none';
+            document.getElementById('snakeGame').style.display = 'none';
+            document.getElementById('bouncingBallGame').style.display = 'none';
+            document.getElementById('pongGame').style.display = 'none';
           }
         }
 
@@ -2471,9 +2583,13 @@
           document.getElementById('flappybirdGame').style.display = 'none';
           document.getElementById('snakeGame').style.display = 'none';
           document.getElementById('bouncingBallGame').style.display = 'none';
+          document.getElementById('pongGame').style.display = 'none';
+          document.getElementById('dodgeGame').style.display = 'none';
           gameState.gameRunning = false;
           snakeGameState.running = false;
           ballGameState.running = false;
+          pongGameState.running = false;
+          dodgeGameState.running = false;
         }
 
         function closeGameModal() {
@@ -2481,6 +2597,8 @@
           gameState.gameRunning = false;
           snakeGameState.running = false;
           ballGameState.running = false;
+          pongGameState.running = false;
+          dodgeGameState.running = false;
         }
 
         function drawBird() {
@@ -2601,6 +2719,299 @@
             gameState.bird.velocity = gameState.jumpPower;
           }
         }, { passive: true });
+
+        // ============ PONG GAME ============
+        let pongGameState = {
+          canvas: document.getElementById('pongCanvas'),
+          ctx: null,
+          playerPaddle: {x: 10, y: 175, width: 10, height: 50, speed: 5},
+          aiPaddle: {x: 380, y: 175, width: 10, height: 50, speed: 4},
+          ball: {x: 200, y: 200, radius: 5, vx: 3, vy: 3},
+          score: 0,
+          aiScore: 0,
+          highscore: localStorage.getItem('pongHighscore') || 0,
+          running: false,
+          gameRunning: false,
+          playerDir: 0
+        };
+
+        pongGameState.ctx = pongGameState.canvas.getContext('2d');
+
+        function startPongGame() {
+          pongGameState.score = 0;
+          pongGameState.aiScore = 0;
+          pongGameState.running = true;
+          pongGameState.gameRunning = true;
+          pongGameState.playerDir = 0;
+          pongGameState.playerPaddle = {x: 10, y: 175, width: 10, height: 50, speed: 5};
+          pongGameState.aiPaddle = {x: 380, y: 175, width: 10, height: 50, speed: 4};
+          pongGameState.ball = {x: 200, y: 200, radius: 5, vx: 3, vy: 3};
+          document.getElementById('pongScore').textContent = '0';
+          
+          const isMobile = window.innerWidth <= 600;
+          document.getElementById('pongMobileControls').style.display = isMobile ? 'block' : 'none';
+          
+          document.addEventListener('keydown', handlePongKeydown);
+          document.addEventListener('keyup', handlePongKeyup);
+          
+          pongGameLoop();
+        }
+
+        function handlePongKeydown(e) {
+          if (!pongGameState.running) return;
+          const key = e.key.toLowerCase();
+          if (key === 'w' || key === 'arrowup') pongGameState.playerDir = -1;
+          else if (key === 's' || key === 'arrowdown') pongGameState.playerDir = 1;
+        }
+
+        function handlePongKeyup(e) {
+          if (!pongGameState.running) return;
+          const key = e.key.toLowerCase();
+          if ((key === 'w' || key === 'arrowup' || key === 's' || key === 'arrowdown')) {
+            pongGameState.playerDir = 0;
+          }
+        }
+
+        function handlePongMobileControl(direction) {
+          if (!pongGameState.running) return;
+          pongGameState.playerDir = direction === 'up' ? -1 : 1;
+        }
+
+        function pongGameLoop() {
+          if (!pongGameState.running) return;
+
+          // Move player paddle
+          pongGameState.playerPaddle.y += pongGameState.playerDir * pongGameState.playerPaddle.speed;
+          pongGameState.playerPaddle.y = Math.max(0, Math.min(pongGameState.playerPaddle.y, pongGameState.canvas.height - pongGameState.playerPaddle.height));
+
+          // AI paddle
+          const aiCenter = pongGameState.aiPaddle.y + pongGameState.aiPaddle.height / 2;
+          if (aiCenter < pongGameState.ball.y - 35) {
+            pongGameState.aiPaddle.y += pongGameState.aiPaddle.speed;
+          } else if (aiCenter > pongGameState.ball.y + 35) {
+            pongGameState.aiPaddle.y -= pongGameState.aiPaddle.speed;
+          }
+          pongGameState.aiPaddle.y = Math.max(0, Math.min(pongGameState.aiPaddle.y, pongGameState.canvas.height - pongGameState.aiPaddle.height));
+
+          // Move ball
+          pongGameState.ball.x += pongGameState.ball.vx;
+          pongGameState.ball.y += pongGameState.ball.vy;
+
+          // Ball bounce off top/bottom
+          if (pongGameState.ball.y - pongGameState.ball.radius < 0 || pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height) {
+            pongGameState.ball.vy = -pongGameState.ball.vy;
+          }
+
+          // Ball hit paddles
+          if (pongGameState.ball.x - pongGameState.ball.radius < pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
+              pongGameState.ball.y > pongGameState.playerPaddle.y && pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height) {
+            pongGameState.ball.vx = -pongGameState.ball.vx;
+          }
+
+          if (pongGameState.ball.x + pongGameState.ball.radius > pongGameState.aiPaddle.x &&
+              pongGameState.ball.y > pongGameState.aiPaddle.y && pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height) {
+            pongGameState.ball.vx = -pongGameState.ball.vx;
+          }
+
+          // Ball out of bounds
+          if (pongGameState.ball.x < 0) {
+            pongGameState.aiScore++;
+            pongGameState.ball = {x: 200, y: 200, radius: 5, vx: 3, vy: 3};
+          } else if (pongGameState.ball.x > pongGameState.canvas.width) {
+            pongGameState.score++;
+            document.getElementById('pongScore').textContent = pongGameState.score;
+            pongGameState.ball = {x: 200, y: 200, radius: 5, vx: -3, vy: 3};
+          }
+
+          if (pongGameState.aiScore >= 5) {
+            endPongGame();
+            return;
+          }
+
+          // Draw
+          pongGameState.ctx.fillStyle = '#1a1a1a';
+          pongGameState.ctx.fillRect(0, 0, pongGameState.canvas.width, pongGameState.canvas.height);
+
+          // Draw center line
+          pongGameState.ctx.strokeStyle = '#666';
+          pongGameState.ctx.setLineDash([5, 5]);
+          pongGameState.ctx.beginPath();
+          pongGameState.ctx.moveTo(pongGameState.canvas.width / 2, 0);
+          pongGameState.ctx.lineTo(pongGameState.canvas.width / 2, pongGameState.canvas.height);
+          pongGameState.ctx.stroke();
+          pongGameState.ctx.setLineDash([]);
+
+          // Draw paddles
+          pongGameState.ctx.fillStyle = '#43e97b';
+          pongGameState.ctx.fillRect(pongGameState.playerPaddle.x, pongGameState.playerPaddle.y, pongGameState.playerPaddle.width, pongGameState.playerPaddle.height);
+          pongGameState.ctx.fillRect(pongGameState.aiPaddle.x, pongGameState.aiPaddle.y, pongGameState.aiPaddle.width, pongGameState.aiPaddle.height);
+
+          // Draw ball
+          pongGameState.ctx.fillStyle = '#FFD700';
+          pongGameState.ctx.beginPath();
+          pongGameState.ctx.arc(pongGameState.ball.x, pongGameState.ball.y, pongGameState.ball.radius, 0, Math.PI * 2);
+          pongGameState.ctx.fill();
+
+          requestAnimationFrame(pongGameLoop);
+        }
+
+        function endPongGame() {
+          pongGameState.running = false;
+          document.removeEventListener('keydown', handlePongKeydown);
+          document.removeEventListener('keyup', handlePongKeyup);
+
+          if (pongGameState.score > pongGameState.highscore) {
+            pongGameState.highscore = pongGameState.score;
+            localStorage.setItem('pongHighscore', pongGameState.highscore);
+            document.getElementById('pongHighscore').textContent = pongGameState.highscore;
+            
+            const highscoreMessage = `🏆 ${currentUser.name} got a new Pong highscore: ${pongGameState.score}!`;
+            socket.emit('chat message', { 
+              msg: highscoreMessage, 
+              room,
+              sender: 'Game',
+              color: '#FFD700',
+              isSystemMessage: true
+            });
+          }
+        }
+
+        // ============ DODGE GAME ============
+        let dodgeGameState = {
+          canvas: document.getElementById('dodgeCanvas'),
+          ctx: null,
+          player: {x: 175, y: 350, width: 50, height: 30, speed: 6},
+          obstacles: [],
+          score: 0,
+          highscore: localStorage.getItem('dodgeHighscore') || 0,
+          running: false,
+          gameRunning: false,
+          playerDir: 0,
+          spawnTimer: 0,
+          spawnRate: 40
+        };
+
+        dodgeGameState.ctx = dodgeGameState.canvas.getContext('2d');
+
+        function startDodgeGame() {
+          dodgeGameState.score = 0;
+          dodgeGameState.running = true;
+          dodgeGameState.gameRunning = true;
+          dodgeGameState.player = {x: 175, y: 350, width: 50, height: 30, speed: 6};
+          dodgeGameState.obstacles = [];
+          dodgeGameState.playerDir = 0;
+          dodgeGameState.spawnTimer = 0;
+          document.getElementById('dodgeScore').textContent = '0';
+          
+          const isMobile = window.innerWidth <= 600;
+          document.getElementById('dodgeMobileControls').style.display = isMobile ? 'block' : 'none';
+          
+          document.addEventListener('keydown', handleDodgeKeydown);
+          document.addEventListener('keyup', handleDodgeKeyup);
+          
+          dodgeGameLoop();
+        }
+
+        function handleDodgeKeydown(e) {
+          if (!dodgeGameState.running) return;
+          const key = e.key.toLowerCase();
+          if (key === 'a' || key === 'arrowleft') dodgeGameState.playerDir = -1;
+          else if (key === 'd' || key === 'arrowright') dodgeGameState.playerDir = 1;
+        }
+
+        function handleDodgeKeyup(e) {
+          if (!dodgeGameState.running) return;
+          const key = e.key.toLowerCase();
+          if ((key === 'a' || key === 'arrowleft' || key === 'd' || key === 'arrowright')) {
+            dodgeGameState.playerDir = 0;
+          }
+        }
+
+        function handleDodgeMobileControl(direction) {
+          if (!dodgeGameState.running) return;
+          dodgeGameState.playerDir = direction === 'left' ? -1 : 1;
+        }
+
+        function dodgeGameLoop() {
+          if (!dodgeGameState.running) return;
+
+          // Move player
+          dodgeGameState.player.x += dodgeGameState.playerDir * dodgeGameState.player.speed;
+          dodgeGameState.player.x = Math.max(0, Math.min(dodgeGameState.player.x, dodgeGameState.canvas.width - dodgeGameState.player.width));
+
+          // Spawn obstacles
+          dodgeGameState.spawnTimer++;
+          if (dodgeGameState.spawnTimer > dodgeGameState.spawnRate) {
+            dodgeGameState.obstacles.push({
+              x: Math.random() * (dodgeGameState.canvas.width - 30),
+              y: -30,
+              width: 30,
+              height: 30,
+              speed: 3 + (dodgeGameState.score / 100)
+            });
+            dodgeGameState.spawnTimer = 0;
+            if (dodgeGameState.spawnRate > 20) dodgeGameState.spawnRate--;
+          }
+
+          // Move obstacles
+          for (let i = 0; i < dodgeGameState.obstacles.length; i++) {
+            dodgeGameState.obstacles[i].y += dodgeGameState.obstacles[i].speed;
+
+            // Collision
+            if (dodgeGameState.obstacles[i].x < dodgeGameState.player.x + dodgeGameState.player.width &&
+                dodgeGameState.obstacles[i].x + dodgeGameState.obstacles[i].width > dodgeGameState.player.x &&
+                dodgeGameState.obstacles[i].y < dodgeGameState.player.y + dodgeGameState.player.height &&
+                dodgeGameState.obstacles[i].y + dodgeGameState.obstacles[i].height > dodgeGameState.player.y) {
+              endDodgeGame();
+              return;
+            }
+
+            // Remove if off screen
+            if (dodgeGameState.obstacles[i].y > dodgeGameState.canvas.height) {
+              dodgeGameState.obstacles.splice(i, 1);
+              dodgeGameState.score += 10;
+              document.getElementById('dodgeScore').textContent = dodgeGameState.score;
+              i--;
+            }
+          }
+
+          // Draw
+          dodgeGameState.ctx.fillStyle = '#1a1a2e';
+          dodgeGameState.ctx.fillRect(0, 0, dodgeGameState.canvas.width, dodgeGameState.canvas.height);
+
+          // Draw player
+          dodgeGameState.ctx.fillStyle = '#43e97b';
+          dodgeGameState.ctx.fillRect(dodgeGameState.player.x, dodgeGameState.player.y, dodgeGameState.player.width, dodgeGameState.player.height);
+
+          // Draw obstacles
+          dodgeGameState.ctx.fillStyle = '#fa709a';
+          for (let obs of dodgeGameState.obstacles) {
+            dodgeGameState.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+          }
+
+          requestAnimationFrame(dodgeGameLoop);
+        }
+
+        function endDodgeGame() {
+          dodgeGameState.running = false;
+          document.removeEventListener('keydown', handleDodgeKeydown);
+          document.removeEventListener('keyup', handleDodgeKeyup);
+
+          if (dodgeGameState.score > dodgeGameState.highscore) {
+            dodgeGameState.highscore = dodgeGameState.score;
+            localStorage.setItem('dodgeHighscore', dodgeGameState.highscore);
+            document.getElementById('dodgeHighscore').textContent = dodgeGameState.highscore;
+            
+            const highscoreMessage = `🏆 ${currentUser.name} got a new Dodge highscore: ${dodgeGameState.score}!`;
+            socket.emit('chat message', { 
+              msg: highscoreMessage, 
+              room,
+              sender: 'Game',
+              color: '#FFD700',
+              isSystemMessage: true
+            });
+          }
+        }
 
         // Initialize on load
         checkRoomPassword();
