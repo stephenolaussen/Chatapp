@@ -2199,7 +2199,10 @@
           gameRunning: false,
           bricks: [],
           brickRows: 3,
-          brickCols: 8
+          brickCols: 8,
+          level: 1,
+          bricksDestroyed: 0,
+          totalBricks: 0
         };
 
         ballGameState.ctx = ballGameState.canvas.getContext('2d');
@@ -2209,7 +2212,10 @@
           const brickWidth = ballGameState.canvas.width / ballGameState.brickCols;
           const brickHeight = 20;
           
-          for (let row = 0; row < ballGameState.brickRows; row++) {
+          // Increase rows per level
+          const rows = Math.min(3 + Math.floor(ballGameState.level / 2), 6);
+          
+          for (let row = 0; row < rows; row++) {
             for (let col = 0; col < ballGameState.brickCols; col++) {
               ballGameState.bricks.push({
                 x: col * brickWidth,
@@ -2220,14 +2226,20 @@
               });
             }
           }
+          
+          ballGameState.totalBricks = ballGameState.bricks.length;
+          ballGameState.bricksDestroyed = 0;
         }
 
         function startBouncingBallGame() {
           ballGameState.score = 0;
           ballGameState.running = true;
           ballGameState.gameRunning = true;
+          ballGameState.level = 1;
           ballGameState.paddle = {x: 175, y: 380, width: 50, height: 10, speed: 8};
-          ballGameState.ball = {x: 200, y: 200, radius: 8, vx: 3, vy: -3};
+          // Increase ball speed per level
+          const baseSpeed = 3 + (ballGameState.level - 1) * 0.5;
+          ballGameState.ball = {x: 200, y: 200, radius: 8, vx: baseSpeed, vy: -baseSpeed};
           document.getElementById('ballScore').textContent = '0';
           
           initBallGame();
@@ -2290,15 +2302,30 @@
             if (ballGameState.ball.x > brick.x && ballGameState.ball.x < brick.x + brick.width &&
                 ballGameState.ball.y > brick.y && ballGameState.ball.y < brick.y + brick.height) {
               brick.active = false;
+              ballGameState.bricksDestroyed++;
               ballGameState.score += 10;
               document.getElementById('ballScore').textContent = ballGameState.score;
               ballGameState.ball.vy = -ballGameState.ball.vy;
+              
+              // Check if all bricks destroyed - next level!
+              if (ballGameState.bricksDestroyed >= ballGameState.totalBricks) {
+                ballGameState.level++;
+                ballGameState.paddle.width = Math.max(30, 50 - ballGameState.level * 2); // Smaller paddle each level
+                const baseSpeed = 3 + (ballGameState.level - 1) * 0.5;
+                ballGameState.ball = {x: 200, y: 200, radius: 8, vx: baseSpeed, vy: -baseSpeed};
+                initBallGame();
+              }
             }
           }
 
           // Draw
           ballGameState.ctx.fillStyle = '#f0f0f0';
           ballGameState.ctx.fillRect(0, 0, ballGameState.canvas.width, ballGameState.canvas.height);
+
+          // Draw level info
+          ballGameState.ctx.fillStyle = '#666';
+          ballGameState.ctx.font = '14px Arial';
+          ballGameState.ctx.fillText(`Level: ${ballGameState.level}`, 10, 20);
 
           // Draw bricks
           for (let brick of ballGameState.bricks) {
