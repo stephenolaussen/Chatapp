@@ -1173,6 +1173,17 @@
             <strong>Arrow Keys or WASD to move</strong><br>
             Eat the red square and grow!
           </div>
+          <!-- Mobile Controls -->
+          <div id="snakeMobileControls" style="display: none; margin: 1rem 0;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; max-width: 200px; margin: 0 auto;">
+              <div></div>
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('up')">⬆️</button>
+              <div></div>
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('left')">⬅️</button>
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('down')">⬇️</button>
+              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('right')">➡️</button>
+            </div>
+          </div>
           <div class="game-buttons">
             <button class="btn-play" onclick="startSnakeGame()">Play</button>
             <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
@@ -2273,10 +2284,29 @@
           snakeGameState.gameRunning = true;
           document.getElementById('snakeScore').textContent = '0';
           
+          // Show mobile controls on mobile devices
+          const isMobile = window.innerWidth <= 600;
+          document.getElementById('snakeMobileControls').style.display = isMobile ? 'block' : 'none';
+          
           // Setup keyboard controls
           document.addEventListener('keydown', handleSnakeKeydown);
           
           snakeGameLoop();
+        }
+
+        function handleSnakeMobileControl(direction) {
+          if (!snakeGameState.running) return;
+          
+          // Prevent moving backwards into itself
+          if (direction === 'up' && snakeGameState.direction.y === 0) {
+            snakeGameState.nextDirection = {x: 0, y: -1};
+          } else if (direction === 'down' && snakeGameState.direction.y === 0) {
+            snakeGameState.nextDirection = {x: 0, y: 1};
+          } else if (direction === 'left' && snakeGameState.direction.x === 0) {
+            snakeGameState.nextDirection = {x: -1, y: 0};
+          } else if (direction === 'right' && snakeGameState.direction.x === 0) {
+            snakeGameState.nextDirection = {x: 1, y: 0};
+          }
         }
 
         function handleSnakeKeydown(e) {
