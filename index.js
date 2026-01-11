@@ -115,12 +115,17 @@ app.use(session({
 }));
 
 // Passport setup
+const nodeEnv = (process.env.NODE_ENV || '').trim();
+const callbackUrl = nodeEnv === 'production'
+    ? 'https://web-production-482a.up.railway.app/auth/google/callback'
+    : 'http://localhost:3000/auth/google/callback';
+
+console.log(`🔐 OAuth Callback URL: ${callbackUrl} (NODE_ENV: ${nodeEnv})`);
+
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackURL: process.env.NODE_ENV === 'production'
-        ? 'https://web-production-482a.up.railway.app/auth/google/callback'
-        : 'http://localhost:3000/auth/google/callback'
+    callbackURL: callbackUrl
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         if (!mongoConnected || !UserSession) {
