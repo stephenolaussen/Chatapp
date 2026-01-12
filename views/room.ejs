@@ -1195,24 +1195,29 @@
             .snake-container {
               background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
               border-radius: 12px;
-              padding: 2rem;
+              padding: 1rem;
               max-width: 500px;
               margin: 0 auto;
               box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+              display: flex;
+              flex-direction: column;
+              height: 100vh;
+              max-height: 100vh;
+              overflow: hidden;
             }
             
             .snake-header {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              margin-bottom: 1.5rem;
+              margin-bottom: 0.5rem;
               flex-wrap: wrap;
-              gap: 1rem;
+              gap: 0.5rem;
             }
             
             .snake-header h2 {
               margin: 0;
-              font-size: 2rem;
+              font-size: 1.5rem;
               background: linear-gradient(135deg, #00FF00, #00CC88);
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
@@ -1221,39 +1226,40 @@
             
             .snake-stats {
               display: flex;
-              gap: 1.5rem;
-              margin-bottom: 1.5rem;
+              gap: 0.75rem;
+              margin-bottom: 0.5rem;
               justify-content: space-around;
               flex-wrap: wrap;
             }
             
             .snake-stat-box {
               background: rgba(102, 126, 234, 0.15);
-              padding: 1rem;
-              border-radius: 8px;
-              border-left: 3px solid #667eea;
+              padding: 0.5rem;
+              border-radius: 6px;
+              border-left: 2px solid #667eea;
               text-align: center;
-              min-width: 120px;
+              min-width: 90px;
+              flex: 1;
             }
             
             .snake-stat-box .label {
-              font-size: 0.85rem;
+              font-size: 0.7rem;
               color: #aaa;
               text-transform: uppercase;
-              letter-spacing: 1px;
+              letter-spacing: 0.5px;
             }
             
             .snake-stat-box .value {
-              font-size: 1.8rem;
+              font-size: 1.3rem;
               font-weight: bold;
               color: #00FF00;
-              margin-top: 0.5rem;
+              margin-top: 0.2rem;
             }
             
             .snake-difficulty {
               text-align: center;
-              margin: 1rem 0;
-              font-size: 0.9rem;
+              margin: 0.3rem 0;
+              font-size: 0.75rem;
               color: #aaa;
             }
             
@@ -1276,35 +1282,41 @@
             .snake-canvas-wrapper {
               position: relative;
               text-align: center;
-              margin-bottom: 1.5rem;
+              margin-bottom: 0.5rem;
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 0;
             }
             
             #snakeCanvas {
               display: block;
-              margin: 0 auto;
               border: 2px solid #667eea;
               border-radius: 8px;
               cursor: crosshair;
               touch-action: none;
               background: #1a1a2e;
               box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
-              max-width: 100%;
-              height: auto;
+              width: 100%;
+              height: 100%;
+              max-width: 400px;
+              max-height: 400px;
             }
             
             .snake-controls {
               text-align: center;
-              margin-bottom: 1rem;
+              margin-bottom: 0.3rem;
             }
             
             .snake-play-btn {
               background: linear-gradient(135deg, #00FF00, #00CC88);
               color: #1a1a2e;
               border: none;
-              padding: 1rem 2.5rem;
-              font-size: 1.1rem;
+              padding: 0.6rem 1.5rem;
+              font-size: 0.9rem;
               font-weight: bold;
-              border-radius: 8px;
+              border-radius: 6px;
               cursor: pointer;
               transition: all 0.3s ease;
               box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3);
@@ -1321,12 +1333,12 @@
             
             .snake-instructions {
               background: rgba(102, 126, 234, 0.1);
-              padding: 1rem;
-              border-radius: 8px;
-              font-size: 0.9rem;
+              padding: 0.5rem;
+              border-radius: 6px;
+              font-size: 0.75rem;
               color: #bbb;
               text-align: center;
-              margin-bottom: 1rem;
+              margin-bottom: 0.5rem;
             }
             
             .snake-controls-hint {
