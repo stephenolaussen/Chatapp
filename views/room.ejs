@@ -1516,32 +1516,159 @@
 
         <!-- Pong Game -->
         <div id="pongGame" style="display: none;">
-          <h2>🏓 Pong</h2>
-          <canvas id="pongCanvas" width="400" height="400"></canvas>
-          <div class="game-stats">
-            <div class="game-stat">
-              <div class="game-stat-label">Score</div>
-              <div class="game-stat-value" id="pongScore">0</div>
+          <style>
+            .pong-container {
+              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+              border-radius: 12px;
+              padding: 1.5rem;
+              max-width: 500px;
+              margin: 0 auto;
+              box-shadow: 0 8px 32px rgba(67, 233, 123, 0.2);
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .pong-header {
+              text-align: center;
+              margin-bottom: 1rem;
+            }
+            
+            .pong-header h2 {
+              margin: 0;
+              font-size: 1.8rem;
+              background: linear-gradient(135deg, #43e97b, #38b86d);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+            }
+            
+            .pong-canvas-wrapper {
+              position: relative;
+              margin-bottom: 1rem;
+              border: 3px solid #43e97b;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 0 30px rgba(67, 233, 123, 0.3), inset 0 0 20px rgba(67, 233, 123, 0.1);
+            }
+            
+            #pongCanvas {
+              display: block;
+              width: 100%;
+              height: auto;
+              max-width: 400px;
+              background: #0a0a0f;
+            }
+            
+            .pong-stats {
+              display: flex;
+              gap: 1rem;
+              margin-bottom: 1rem;
+              justify-content: center;
+            }
+            
+            .pong-stat-box {
+              background: rgba(67, 233, 123, 0.1);
+              padding: 0.75rem 1.5rem;
+              border-radius: 8px;
+              border: 2px solid #43e97b;
+              text-align: center;
+              min-width: 120px;
+            }
+            
+            .pong-stat-label {
+              font-size: 0.8rem;
+              color: #aaa;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 0.3rem;
+            }
+            
+            .pong-stat-value {
+              font-size: 1.8rem;
+              font-weight: bold;
+              color: #43e97b;
+              text-shadow: 0 0 10px rgba(67, 233, 123, 0.5);
+            }
+            
+            .pong-instructions {
+              background: rgba(67, 233, 123, 0.1);
+              padding: 0.75rem;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              color: #bbb;
+              text-align: center;
+              margin-bottom: 1rem;
+              border-left: 3px solid #43e97b;
+            }
+            
+            .pong-controls {
+              text-align: center;
+              margin-bottom: 1rem;
+            }
+            
+            .btn-pong-play {
+              background: linear-gradient(135deg, #43e97b, #38b86d);
+              color: #0a0a0f;
+              border: none;
+              padding: 0.75rem 2rem;
+              font-size: 1rem;
+              font-weight: bold;
+              border-radius: 8px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+            }
+            
+            .btn-pong-play:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 25px rgba(67, 233, 123, 0.6);
+            }
+            
+            .btn-pong-play:active {
+              transform: translateY(0);
+            }
+          </style>
+          
+          <div class="pong-container">
+            <div class="pong-header">
+              <h2>🏓 Pong</h2>
             </div>
-            <div class="game-stat">
-              <div class="game-stat-label">Highscore</div>
-              <div class="game-stat-value" id="pongHighscore">0</div>
+            
+            <div class="pong-canvas-wrapper">
+              <canvas id="pongCanvas" width="400" height="400"></canvas>
             </div>
-          </div>
-          <div class="game-instructions">
-            <strong>Arrow Keys or W/S to move paddle</strong><br>
-            Beat the AI! Score by making them miss!
-          </div>
-          <!-- Mobile Controls -->
-          <div id="pongMobileControls" style="display: none; margin: 1rem 0;">
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; max-width: 150px; margin: 0 auto;">
-              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handlePongMobileControl('up')">⬆️ UP</button>
-              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handlePongMobileControl('down')">⬇️ DOWN</button>
+            
+            <div class="pong-stats">
+              <div class="pong-stat-box">
+                <div class="pong-stat-label">Your Score</div>
+                <div class="pong-stat-value" id="pongScore">0</div>
+              </div>
+              <div class="pong-stat-box">
+                <div class="pong-stat-label">Highscore</div>
+                <div class="pong-stat-value" id="pongHighscore">0</div>
+              </div>
             </div>
-          </div>
-          <div class="game-buttons">
-            <button class="btn-play" onclick="startPongGame()">Play</button>
-            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+            
+            <div class="pong-instructions">
+              <strong>🎮 Arrow Keys or W/S to move paddle</strong><br>
+              <span style="font-size: 0.9rem;">Beat the AI! Score by making them miss!</span>
+            </div>
+            
+            <!-- Mobile Controls -->
+            <div id="pongMobileControls" style="display: none; margin: 1rem 0;">
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; max-width: 200px; margin: 0 auto;">
+                <button style="padding: 1rem; background: linear-gradient(135deg, #43e97b, #38b86d); color: #0a0a0f; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.3rem; box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);" onclick="handlePongMobileControl('up')">⬆️ UP</button>
+                <button style="padding: 1rem; background: linear-gradient(135deg, #43e97b, #38b86d); color: #0a0a0f; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.3rem; box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);" onclick="handlePongMobileControl('down')">⬇️ DOWN</button>
+              </div>
+            </div>
+            
+            <div class="pong-controls">
+              <button class="btn-pong-play" onclick="startPongGame()">▶️ Play</button>
+            </div>
+            
+            <div style="text-align: center;">
+              <button class="btn-close-game" onclick="backToGameMenu()" style="margin-top: 0.5rem;">⬅️ Tilbake</button>
+            </div>
           </div>
         </div>
 
@@ -3338,6 +3465,11 @@
           }
           pongGameState.aiPaddle.y = Math.max(0, Math.min(pongGameState.aiPaddle.y, pongGameState.canvas.height - pongGameState.aiPaddle.height));
 
+          // Limit ball velocity to prevent tunneling
+          const maxVelocity = 8;
+          pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
+          pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
+
           // Move ball
           pongGameState.ball.x += pongGameState.ball.vx;
           pongGameState.ball.y += pongGameState.ball.vy;
@@ -3351,51 +3483,56 @@
             pongGameState.ball.vy = -pongGameState.ball.vy;
           }
 
-          // Ball hit player paddle - improved collision detection
-          if (pongGameState.ball.x - pongGameState.ball.radius < pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
-              pongGameState.ball.x - pongGameState.ball.radius > pongGameState.playerPaddle.x &&
-              pongGameState.ball.y > pongGameState.playerPaddle.y && 
-              pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height &&
-              pongGameState.lastHitPaddle !== 'player') {
+          // Ball hit player paddle - STRICT collision detection
+          if (pongGameState.ball.vx > 0 && // Ball moving right (towards AI)
+              pongGameState.lastHitPaddle !== 'player' &&
+              pongGameState.ball.x - pongGameState.ball.radius <= pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
+              pongGameState.ball.x - pongGameState.ball.radius >= pongGameState.playerPaddle.x - pongGameState.ball.radius &&
+              pongGameState.ball.y > pongGameState.playerPaddle.y - pongGameState.ball.radius && 
+              pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height + pongGameState.ball.radius) {
+            // Calculate paddle impact position and angle
+            const impactPos = (pongGameState.ball.y - pongGameState.playerPaddle.y) / pongGameState.playerPaddle.height;
             pongGameState.ball.x = pongGameState.playerPaddle.x + pongGameState.playerPaddle.width + pongGameState.ball.radius;
-            pongGameState.ball.vx = -pongGameState.ball.vx * 1.02; // Slight speed increase
+            pongGameState.ball.vx = Math.abs(pongGameState.ball.vx) * 1.05; // Always send right
+            pongGameState.ball.vy += (impactPos - 0.5) * 2; // Add spin based on paddle position
             pongGameState.lastHitPaddle = 'player';
           }
 
-          // Ball hit AI paddle - improved collision detection
-          if (pongGameState.ball.x + pongGameState.ball.radius > pongGameState.aiPaddle.x &&
-              pongGameState.ball.x + pongGameState.ball.radius < pongGameState.aiPaddle.x + pongGameState.aiPaddle.width &&
-              pongGameState.ball.y > pongGameState.aiPaddle.y && 
-              pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height &&
-              pongGameState.lastHitPaddle !== 'ai') {
+          // Ball hit AI paddle - STRICT collision detection
+          if (pongGameState.ball.vx < 0 && // Ball moving left (towards player)
+              pongGameState.lastHitPaddle !== 'ai' &&
+              pongGameState.ball.x + pongGameState.ball.radius >= pongGameState.aiPaddle.x &&
+              pongGameState.ball.x + pongGameState.ball.radius <= pongGameState.aiPaddle.x + pongGameState.aiPaddle.width + pongGameState.ball.radius &&
+              pongGameState.ball.y > pongGameState.aiPaddle.y - pongGameState.ball.radius && 
+              pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height + pongGameState.ball.radius) {
+            // Calculate paddle impact position and angle
+            const impactPos = (pongGameState.ball.y - pongGameState.aiPaddle.y) / pongGameState.aiPaddle.height;
             pongGameState.ball.x = pongGameState.aiPaddle.x - pongGameState.ball.radius;
-            pongGameState.ball.vx = -pongGameState.ball.vx * 1.02; // Slight speed increase
+            pongGameState.ball.vx = -Math.abs(pongGameState.ball.vx) * 1.05; // Always send left
+            pongGameState.ball.vy += (impactPos - 0.5) * 2; // Add spin based on paddle position
             pongGameState.lastHitPaddle = 'ai';
           }
 
           // Ball out of bounds
-          if (pongGameState.ball.x < 0) {
+          if (pongGameState.ball.x < -pongGameState.ball.radius) {
             pongGameState.aiScore++;
             // Ball goes LEFT (towards AI) after AI scores
-            const randomVx = -(2 + Math.random() * 2);
-            const randomVy = (Math.random() - 0.5) * 4;
+            const randomVx = -(3 + Math.random() * 2);
+            const randomVy = (Math.random() - 0.5) * 3;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
             pongGameState.lastHitPaddle = null;
-          } else if (pongGameState.ball.x > pongGameState.canvas.width) {
+          } else if (pongGameState.ball.x > pongGameState.canvas.width + pongGameState.ball.radius) {
             pongGameState.score++;
             document.getElementById('pongScore').textContent = pongGameState.score;
             // Ball goes RIGHT (towards player) after player scores
-            const randomVx = 2 + Math.random() * 2;
-            const randomVy = (Math.random() - 0.5) * 4;
+            const randomVx = 3 + Math.random() * 2;
+            const randomVy = (Math.random() - 0.5) * 3;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
             pongGameState.lastHitPaddle = null;
           }
 
-          // Clear lastHitPaddle flag when ball is far from both paddles
-          if (pongGameState.lastHitPaddle === 'player' && pongGameState.ball.x > 100) {
-            pongGameState.lastHitPaddle = null;
-          }
-          if (pongGameState.lastHitPaddle === 'ai' && pongGameState.ball.x < 300) {
+          // Clear lastHitPaddle flag when ball is in center area - safer clearing
+          if (pongGameState.ball.x > 120 && pongGameState.ball.x < 280) {
             pongGameState.lastHitPaddle = null;
           }
 
@@ -3405,28 +3542,90 @@
           }
 
           // Draw
-          pongGameState.ctx.fillStyle = '#1a1a1a';
+          // Background with gradient
+          const gradient = pongGameState.ctx.createLinearGradient(0, 0, 0, pongGameState.canvas.height);
+          gradient.addColorStop(0, '#0a0a0f');
+          gradient.addColorStop(1, '#1a1a2e');
+          pongGameState.ctx.fillStyle = gradient;
           pongGameState.ctx.fillRect(0, 0, pongGameState.canvas.width, pongGameState.canvas.height);
 
-          // Draw center line
-          pongGameState.ctx.strokeStyle = '#666';
-          pongGameState.ctx.setLineDash([5, 5]);
+          // Draw center line with glow effect
+          pongGameState.ctx.strokeStyle = 'rgba(102, 126, 234, 0.4)';
+          pongGameState.ctx.lineWidth = 2;
+          pongGameState.ctx.setLineDash([8, 6]);
           pongGameState.ctx.beginPath();
           pongGameState.ctx.moveTo(pongGameState.canvas.width / 2, 0);
           pongGameState.ctx.lineTo(pongGameState.canvas.width / 2, pongGameState.canvas.height);
           pongGameState.ctx.stroke();
           pongGameState.ctx.setLineDash([]);
 
-          // Draw paddles
-          pongGameState.ctx.fillStyle = '#43e97b';
-          pongGameState.ctx.fillRect(pongGameState.playerPaddle.x, pongGameState.playerPaddle.y, pongGameState.playerPaddle.width, pongGameState.playerPaddle.height);
-          pongGameState.ctx.fillRect(pongGameState.aiPaddle.x, pongGameState.aiPaddle.y, pongGameState.aiPaddle.width, pongGameState.aiPaddle.height);
+          // Draw court border
+          pongGameState.ctx.strokeStyle = 'rgba(102, 126, 234, 0.6)';
+          pongGameState.ctx.lineWidth = 2;
+          pongGameState.ctx.strokeRect(1, 1, pongGameState.canvas.width - 2, pongGameState.canvas.height - 2);
 
-          // Draw ball
-          pongGameState.ctx.fillStyle = '#FFD700';
+          // Draw paddles with glow effect
+          const drawPaddle = (paddle, isPlayer) => {
+            // Glow effect
+            pongGameState.ctx.shadowColor = isPlayer ? 'rgba(67, 233, 123, 0.8)' : 'rgba(255, 107, 107, 0.8)';
+            pongGameState.ctx.shadowBlur = 15;
+            pongGameState.ctx.shadowOffsetX = 0;
+            pongGameState.ctx.shadowOffsetY = 0;
+            
+            // Paddle gradient
+            const paddleGradient = pongGameState.ctx.createLinearGradient(paddle.x, paddle.y, paddle.x + paddle.width, paddle.y);
+            paddleGradient.addColorStop(0, isPlayer ? '#43e97b' : '#FF6B6B');
+            paddleGradient.addColorStop(1, isPlayer ? '#38b86d' : '#FF4757');
+            pongGameState.ctx.fillStyle = paddleGradient;
+            
+            // Draw rounded paddle
+            pongGameState.ctx.beginPath();
+            pongGameState.ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 3);
+            pongGameState.ctx.fill();
+            
+            // Paddle highlight
+            pongGameState.ctx.fillStyle = isPlayer ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.2)';
+            pongGameState.ctx.fillRect(paddle.x, paddle.y, paddle.width / 2, paddle.height / 4);
+            
+            pongGameState.ctx.shadowBlur = 0;
+          };
+
+          drawPaddle(pongGameState.playerPaddle, true);
+          drawPaddle(pongGameState.aiPaddle, false);
+
+          // Draw ball with enhanced effects
+          const ballGradient = pongGameState.ctx.createRadialGradient(pongGameState.ball.x - 2, pongGameState.ball.y - 2, 0, pongGameState.ball.x, pongGameState.ball.y, pongGameState.ball.radius);
+          ballGradient.addColorStop(0, '#FFFF99');
+          ballGradient.addColorStop(1, '#FFD700');
+          
+          // Ball glow
+          pongGameState.ctx.shadowColor = '#FFD700';
+          pongGameState.ctx.shadowBlur = 20;
+          pongGameState.ctx.fillStyle = ballGradient;
           pongGameState.ctx.beginPath();
           pongGameState.ctx.arc(pongGameState.ball.x, pongGameState.ball.y, pongGameState.ball.radius, 0, Math.PI * 2);
           pongGameState.ctx.fill();
+          
+          // Ball highlight
+          pongGameState.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          pongGameState.ctx.beginPath();
+          pongGameState.ctx.arc(pongGameState.ball.x - 2, pongGameState.ball.y - 2, pongGameState.ball.radius * 0.4, 0, Math.PI * 2);
+          pongGameState.ctx.fill();
+          
+          pongGameState.ctx.shadowBlur = 0;
+
+          // Draw scores on canvas with better styling
+          pongGameState.ctx.fillStyle = '#43e97b';
+          pongGameState.ctx.font = 'bold 32px Arial';
+          pongGameState.ctx.textAlign = 'center';
+          pongGameState.ctx.shadowColor = 'rgba(67, 233, 123, 0.5)';
+          pongGameState.ctx.shadowBlur = 10;
+          pongGameState.ctx.fillText(pongGameState.score, pongGameState.canvas.width / 4, 40);
+          
+          pongGameState.ctx.fillStyle = '#FF6B6B';
+          pongGameState.ctx.shadowColor = 'rgba(255, 107, 107, 0.5)';
+          pongGameState.ctx.fillText(pongGameState.aiScore, (pongGameState.canvas.width / 4) * 3, 40);
+          pongGameState.ctx.shadowBlur = 0;
 
           requestAnimationFrame(pongGameLoop);
         }
