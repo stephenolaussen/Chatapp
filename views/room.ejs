@@ -1192,35 +1192,14 @@
         <!-- Snake Game -->
         <div id="snakeGame" style="display: none;">
           <h2>🐍 Snake</h2>
-          <canvas id="snakeCanvas" width="400" height="400"></canvas>
-          <div class="game-stats">
-            <div class="game-stat">
-              <div class="game-stat-label">Score</div>
-              <div class="game-stat-value" id="snakeScore">0</div>
-            </div>
-            <div class="game-stat">
-              <div class="game-stat-label">Highscore</div>
-              <div class="game-stat-value" id="snakeHighscore">0</div>
-            </div>
+          <div style="display: flex; justify-content: space-around; margin: 1rem 0; font-weight: bold;">
+            <div>Score: <span id="snakeScore">0</span></div>
+            <div>Highscore: <span id="snakeHighscore">0</span></div>
           </div>
-          <div class="game-instructions">
-            <strong>Arrow Keys or WASD to move</strong><br>
-            Eat the red square and grow!
-          </div>
-          <!-- Mobile Controls -->
-          <div id="snakeMobileControls" style="display: none; margin: 1rem 0;">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; max-width: 200px; margin: 0 auto;">
-              <div></div>
-              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('up')">⬆️</button>
-              <div></div>
-              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('left')">⬅️</button>
-              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('down')">⬇️</button>
-              <button style="padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.2rem;" onclick="handleSnakeMobileControl('right')">➡️</button>
-            </div>
-          </div>
-          <div class="game-buttons">
-            <button class="btn-play" onclick="startSnakeGame()">Play</button>
-            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+          <canvas id="snakeCanvas" width="400" height="400" style="display: block; margin: 0 auto; border: 3px solid #667eea; border-radius: 8px; cursor: crosshair; touch-action: none;"></canvas>
+          <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.9rem;">
+            <p>Swipe or use Arrow Keys/WASD to move</p>
+            <button class="btn-close-game" onclick="backToGameMenu()" style="margin-top: 1rem;">⬅️ Tilbake</button>
           </div>
         </div>
 
@@ -2461,29 +2440,37 @@
           snakeGameState.gameRunning = true;
           document.getElementById('snakeScore').textContent = '0';
           
-          // Show mobile controls on mobile devices
-          const isMobile = window.innerWidth <= 600;
-          document.getElementById('snakeMobileControls').style.display = isMobile ? 'block' : 'none';
+          // Prevent scrolling during game
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
           
           // Setup keyboard controls
           document.addEventListener('keydown', handleSnakeKeydown);
           
-          // Setup swipe controls for mobile
+          // Setup touch swipe controls directly on canvas
+          const canvas = snakeGameState.canvas;
           let touchStartX = 0;
           let touchStartY = 0;
           
-          document.addEventListener('touchstart', (e) => {
+          canvas.addEventListener('touchstart', (e) => {
             if (!snakeGameState.running) return;
+            e.preventDefault();
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-          });
+          }, { passive: false });
           
-          document.addEventListener('touchend', (e) => {
+          canvas.addEventListener('touchend', (e) => {
             if (!snakeGameState.running) return;
+            e.preventDefault();
             const touchEndX = e.changedTouches[0].clientX;
             const touchEndY = e.changedTouches[0].clientY;
             handleSnakeSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
-          });
+          }, { passive: false });
+          
+          canvas.addEventListener('touchmove', (e) => {
+            if (!snakeGameState.running) return;
+            e.preventDefault();
+          }, { passive: false });
           
           snakeGameLoop();
         }
@@ -2666,6 +2653,10 @@
         function endSnakeGame() {
           snakeGameState.running = false;
           document.removeEventListener('keydown', handleSnakeKeydown);
+          
+          // Restore scrolling
+          document.body.style.overflow = 'auto';
+          document.documentElement.style.overflow = 'auto';
 
           if (snakeGameState.score > snakeGameState.highscore) {
             snakeGameState.highscore = snakeGameState.score;
