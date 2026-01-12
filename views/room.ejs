@@ -3074,6 +3074,11 @@
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
+            // Reset snake game UI state when returning to snake game screen
+            document.getElementById('snakePlayBtn').style.display = 'block';
+            document.getElementById('snakeGameOverOverlay').style.display = 'none';
+            document.getElementById('snakeGameOverOverlay').style.pointerEvents = 'none';
+            snakeGameState.running = false;
           } else if (game === 'bouncingball') {
             document.getElementById('bouncingBallGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
@@ -3104,6 +3109,9 @@
           document.getElementById('dodgeGame').style.display = 'none';
           gameState.gameRunning = false;
           snakeGameState.running = false;
+          // Hide the snake game over overlay when returning to menu
+          document.getElementById('snakeGameOverOverlay').style.display = 'none';
+          document.getElementById('snakeGameOverOverlay').style.pointerEvents = 'none';
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
