@@ -3342,23 +3342,34 @@
           pongGameState.ball.x += pongGameState.ball.vx;
           pongGameState.ball.y += pongGameState.ball.vy;
 
-          // Ball bounce off top/bottom
-          if (pongGameState.ball.y - pongGameState.ball.radius < 0 || pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height) {
+          // Ball bounce off top/bottom with clamping
+          if (pongGameState.ball.y - pongGameState.ball.radius < 0) {
+            pongGameState.ball.y = pongGameState.ball.radius;
+            pongGameState.ball.vy = -pongGameState.ball.vy;
+          } else if (pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height) {
+            pongGameState.ball.y = pongGameState.canvas.height - pongGameState.ball.radius;
             pongGameState.ball.vy = -pongGameState.ball.vy;
           }
 
-          // Ball hit paddles
+          // Ball hit player paddle - improved collision detection
           if (pongGameState.ball.x - pongGameState.ball.radius < pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
-              pongGameState.ball.y > pongGameState.playerPaddle.y && pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height &&
+              pongGameState.ball.x - pongGameState.ball.radius > pongGameState.playerPaddle.x &&
+              pongGameState.ball.y > pongGameState.playerPaddle.y && 
+              pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height &&
               pongGameState.lastHitPaddle !== 'player') {
-            pongGameState.ball.vx = -pongGameState.ball.vx;
+            pongGameState.ball.x = pongGameState.playerPaddle.x + pongGameState.playerPaddle.width + pongGameState.ball.radius;
+            pongGameState.ball.vx = -pongGameState.ball.vx * 1.02; // Slight speed increase
             pongGameState.lastHitPaddle = 'player';
           }
 
+          // Ball hit AI paddle - improved collision detection
           if (pongGameState.ball.x + pongGameState.ball.radius > pongGameState.aiPaddle.x &&
-              pongGameState.ball.y > pongGameState.aiPaddle.y && pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height &&
+              pongGameState.ball.x + pongGameState.ball.radius < pongGameState.aiPaddle.x + pongGameState.aiPaddle.width &&
+              pongGameState.ball.y > pongGameState.aiPaddle.y && 
+              pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height &&
               pongGameState.lastHitPaddle !== 'ai') {
-            pongGameState.ball.vx = -pongGameState.ball.vx;
+            pongGameState.ball.x = pongGameState.aiPaddle.x - pongGameState.ball.radius;
+            pongGameState.ball.vx = -pongGameState.ball.vx * 1.02; // Slight speed increase
             pongGameState.lastHitPaddle = 'ai';
           }
 
@@ -3377,6 +3388,14 @@
             const randomVx = 2 + Math.random() * 2;
             const randomVy = (Math.random() - 0.5) * 4;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
+            pongGameState.lastHitPaddle = null;
+          }
+
+          // Clear lastHitPaddle flag when ball is far from both paddles
+          if (pongGameState.lastHitPaddle === 'player' && pongGameState.ball.x > 100) {
+            pongGameState.lastHitPaddle = null;
+          }
+          if (pongGameState.lastHitPaddle === 'ai' && pongGameState.ball.x < 300) {
             pongGameState.lastHitPaddle = null;
           }
 
