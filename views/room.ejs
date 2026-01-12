@@ -1161,9 +1161,6 @@
             <button class="btn-game-select" onclick="selectGame('dodge')">
               🚗 Dodge
             </button>
-            <button class="btn-game-select" onclick="selectGame('pinball')">
-              🎱 Pinball
-            </button>
           </div>
           <button class="btn-close-game" onclick="closeGameModal()" style="margin-top: 1rem; width: 100%;">Lukk</button>
         </div>
@@ -1567,34 +1564,6 @@
           </div>
           <div class="game-buttons">
             <button class="btn-play" onclick="startDodgeGame()">Play</button>
-            <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
-          </div>
-        </div>
-
-        <!-- Pinball Game -->
-        <div id="pinballGame" style="display: none;">
-          <h2>🎱 Pinball</h2>
-          <canvas id="pinballCanvas" width="300" height="500"></canvas>
-          <div class="game-stats">
-            <div class="game-stat">
-              <div class="game-stat-label">Score</div>
-              <div class="game-stat-value" id="pinballScore">0</div>
-            </div>
-            <div class="game-stat">
-              <div class="game-stat-label">Highscore</div>
-              <div class="game-stat-value" id="pinballHighscore">0</div>
-            </div>
-            <div class="game-stat">
-              <div class="game-stat-label">Balls</div>
-              <div class="game-stat-value" id="pinballBalls">3</div>
-            </div>
-          </div>
-          <div class="game-instructions">
-            <strong>Arrow Keys or A/D to control flippers</strong><br>
-            Keep the ball in play! Hit bumpers and ramps!
-          </div>
-          <div class="game-buttons">
-            <button class="btn-play" onclick="startPinballGame()">Play</button>
             <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
           </div>
         </div>
@@ -3076,13 +3045,11 @@
           document.getElementById('bouncingBallGame').style.display = 'none';
           document.getElementById('pongGame').style.display = 'none';
           document.getElementById('dodgeGame').style.display = 'none';
-          document.getElementById('pinballGame').style.display = 'none';
           document.getElementById('gameHighscore').textContent = gameState.highscore;
           document.getElementById('snakeHighscore').textContent = localStorage.getItem('snakeHighscore') || 0;
           document.getElementById('ballHighscore').textContent = localStorage.getItem('ballHighscore') || 0;
           document.getElementById('pongHighscore').textContent = localStorage.getItem('pongHighscore') || 0;
           document.getElementById('dodgeHighscore').textContent = localStorage.getItem('dodgeHighscore') || 0;
-          document.getElementById('pinballHighscore').textContent = localStorage.getItem('pinballHighscore') || 0;
         }
 
         function selectGame(game) {
@@ -3093,42 +3060,30 @@
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
-            document.getElementById('pinballGame').style.display = 'none';
           } else if (game === 'snake') {
             document.getElementById('snakeGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
-            document.getElementById('pinballGame').style.display = 'none';
           } else if (game === 'bouncingball') {
             document.getElementById('bouncingBallGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
-            document.getElementById('pinballGame').style.display = 'none';
           } else if (game === 'pong') {
             document.getElementById('pongGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
-            document.getElementById('pinballGame').style.display = 'none';
           } else if (game === 'dodge') {
             document.getElementById('dodgeGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
-            document.getElementById('pinballGame').style.display = 'none';
-          } else if (game === 'pinball') {
-            document.getElementById('pinballGame').style.display = 'block';
-            document.getElementById('flappybirdGame').style.display = 'none';
-            document.getElementById('snakeGame').style.display = 'none';
-            document.getElementById('bouncingBallGame').style.display = 'none';
-            document.getElementById('pongGame').style.display = 'none';
-            document.getElementById('dodgeGame').style.display = 'none';
           }
         }
 
@@ -3139,13 +3094,11 @@
           document.getElementById('bouncingBallGame').style.display = 'none';
           document.getElementById('pongGame').style.display = 'none';
           document.getElementById('dodgeGame').style.display = 'none';
-          document.getElementById('pinballGame').style.display = 'none';
           gameState.gameRunning = false;
           snakeGameState.running = false;
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
-          pinballGameState.running = false;
         }
 
         function closeGameModal() {
@@ -3155,7 +3108,6 @@
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
-          pinballGameState.running = false;
         }
 
         function drawBird() {
@@ -3610,251 +3562,6 @@
             document.getElementById('dodgeHighscore').textContent = dodgeGameState.highscore;
             
             const highscoreMessage = `🏆 ${currentUser.name} got a new Dodge highscore: ${dodgeGameState.score}!`;
-            socket.emit('chat message', { 
-              msg: highscoreMessage, 
-              room,
-              sender: 'Game',
-              color: '#FFD700',
-              isSystemMessage: true,
-              noNotification: true
-            });
-          }
-        }
-
-        // ============ PINBALL GAME ============
-        let pinballGameState = {
-          canvas: document.getElementById('pinballCanvas'),
-          ctx: null,
-          ball: { x: 150, y: 50, radius: 6, vx: 0, vy: 0 },
-          leftFlipper: { x: 50, y: 450, width: 60, height: 12, angle: 0, active: false },
-          rightFlipper: { x: 190, y: 450, width: 60, height: 12, angle: 0, active: false },
-          bumpers: [],
-          bumperCooldowns: {},
-          score: 0,
-          highscore: localStorage.getItem('pinballHighscore') || 0,
-          balls: 3,
-          running: false,
-          gravity: 0.35,
-          friction: 0.995
-        };
-
-        pinballGameState.ctx = pinballGameState.canvas.getContext('2d');
-
-        function startPinballGame() {
-          const oldCanvas = pinballGameState.canvas;
-          const newCanvas = oldCanvas.cloneNode(true);
-          oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
-          pinballGameState.canvas = newCanvas;
-          pinballGameState.ctx = pinballGameState.canvas.getContext('2d');
-
-          pinballGameState.ball = { x: 150, y: 100, radius: 6, vx: 0, vy: 0 };
-          pinballGameState.score = 0;
-          pinballGameState.balls = 3;
-          pinballGameState.running = true;
-          pinballGameState.leftFlipper.active = false;
-          pinballGameState.rightFlipper.active = false;
-
-          // Create bumpers in nice grid
-          pinballGameState.bumpers = [
-            { x: 75, y: 80, radius: 15, color: '#FF6B6B' },
-            { x: 150, y: 60, radius: 15, color: '#4ECDC4' },
-            { x: 225, y: 80, radius: 15, color: '#FFE66D' },
-            { x: 50, y: 160, radius: 15, color: '#95E1D3' },
-            { x: 150, y: 140, radius: 15, color: '#F38181' },
-            { x: 250, y: 160, radius: 15, color: '#AA96DA' },
-            { x: 100, y: 240, radius: 15, color: '#FCBAD3' },
-            { x: 200, y: 240, radius: 15, color: '#A8D8EA' }
-          ];
-
-          document.getElementById('pinballScore').textContent = '0';
-          document.getElementById('pinballBalls').textContent = '3';
-
-          const keydownHandler = (e) => {
-            if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
-              pinballGameState.leftFlipper.active = true;
-            }
-            if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
-              pinballGameState.rightFlipper.active = true;
-            }
-          };
-
-          const keyupHandler = (e) => {
-            if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
-              pinballGameState.leftFlipper.active = false;
-            }
-            if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
-              pinballGameState.rightFlipper.active = false;
-            }
-          };
-
-          document.addEventListener('keydown', keydownHandler);
-          document.addEventListener('keyup', keyupHandler);
-
-          pinballGameLoop();
-        }
-
-        function pinballGameLoop() {
-          if (!pinballGameState.running) return;
-
-          // Physics
-          pinballGameState.ball.vy += pinballGameState.gravity;
-          pinballGameState.ball.x += pinballGameState.ball.vx;
-          pinballGameState.ball.y += pinballGameState.ball.vy;
-          pinballGameState.ball.vx *= pinballGameState.friction;
-          pinballGameState.ball.vy *= pinballGameState.friction;
-
-          // Wall collisions
-          if (pinballGameState.ball.x - pinballGameState.ball.radius < 0) {
-            pinballGameState.ball.x = pinballGameState.ball.radius;
-            pinballGameState.ball.vx *= -0.8;
-          }
-          if (pinballGameState.ball.x + pinballGameState.ball.radius > pinballGameState.canvas.width) {
-            pinballGameState.ball.x = pinballGameState.canvas.width - pinballGameState.ball.radius;
-            pinballGameState.ball.vx *= -0.8;
-          }
-          if (pinballGameState.ball.y - pinballGameState.ball.radius < 0) {
-            pinballGameState.ball.y = pinballGameState.ball.radius;
-            pinballGameState.ball.vy *= -0.8;
-          }
-
-          // Bumper collisions
-          for (let i = 0; i < pinballGameState.bumpers.length; i++) {
-            let bumper = pinballGameState.bumpers[i];
-            const dx = pinballGameState.ball.x - bumper.x;
-            const dy = pinballGameState.ball.y - bumper.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < pinballGameState.ball.radius + bumper.radius) {
-              // Check cooldown - prevent rapid re-collisions
-              const now = Date.now();
-              if (!pinballGameState.bumperCooldowns[i] || now - pinballGameState.bumperCooldowns[i] > 200) {
-                const angle = Math.atan2(dy, dx);
-                pinballGameState.ball.x = bumper.x + Math.cos(angle) * (pinballGameState.ball.radius + bumper.radius + 2);
-                pinballGameState.ball.y = bumper.y + Math.sin(angle) * (pinballGameState.ball.radius + bumper.radius + 2);
-                pinballGameState.ball.vx = Math.cos(angle) * 14;
-                pinballGameState.ball.vy = Math.sin(angle) * 14;
-                pinballGameState.score += 100;
-                document.getElementById('pinballScore').textContent = pinballGameState.score;
-                pinballGameState.bumperCooldowns[i] = now;
-              }
-            }
-          }
-
-          // Flipper collisions - Left
-          const leftFlipperAngle = pinballGameState.leftFlipper.active ? -0.4 : 0;
-          if (checkFlipperCollision(pinballGameState.ball, pinballGameState.leftFlipper, leftFlipperAngle)) {
-            pinballGameState.ball.vy = -15;
-            pinballGameState.ball.vx = -8;
-          }
-
-          // Flipper collisions - Right
-          const rightFlipperAngle = pinballGameState.rightFlipper.active ? 0.4 : 0;
-          if (checkFlipperCollision(pinballGameState.ball, pinballGameState.rightFlipper, rightFlipperAngle)) {
-            pinballGameState.ball.vy = -15;
-            pinballGameState.ball.vx = 8;
-          }
-
-          // Ball lost
-          if (pinballGameState.ball.y > pinballGameState.canvas.height + 50) {
-            pinballGameState.balls--;
-            document.getElementById('pinballBalls').textContent = pinballGameState.balls;
-            if (pinballGameState.balls <= 0) {
-              endPinballGame();
-              return;
-            }
-            pinballGameState.ball = { x: 150, y: 50, radius: 6, vx: 0, vy: 0 };
-          }
-
-          drawPinball();
-          requestAnimationFrame(pinballGameLoop);
-        }
-
-        function checkFlipperCollision(ball, flipper, angle) {
-          const flipperEndX = flipper.x + Math.cos(angle) * flipper.width;
-          const flipperEndY = flipper.y + Math.sin(angle) * flipper.height;
-          
-          const dx = flipperEndX - flipper.x;
-          const dy = flipperEndY - flipper.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          const ux = dx / len;
-          const uy = dy / len;
-
-          const px = ball.x - flipper.x;
-          const py = ball.y - flipper.y;
-          const t = Math.max(0, Math.min(len, ux * px + uy * py));
-          
-          const cx = flipper.x + ux * t;
-          const cy = flipper.y + uy * t;
-          
-          const dx2 = ball.x - cx;
-          const dy2 = ball.y - cy;
-          const dist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-          
-          return dist < ball.radius + 6;
-        }
-
-        function drawPinball() {
-          // Background
-          pinballGameState.ctx.fillStyle = '#1a1a2e';
-          pinballGameState.ctx.fillRect(0, 0, pinballGameState.canvas.width, pinballGameState.canvas.height);
-
-          // Ball - glowing effect
-          const gradient = pinballGameState.ctx.createRadialGradient(
-            pinballGameState.ball.x - 3, pinballGameState.ball.y - 3, 0,
-            pinballGameState.ball.x, pinballGameState.ball.y, pinballGameState.ball.radius + 5
-          );
-          gradient.addColorStop(0, '#FFD700');
-          gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
-          pinballGameState.ctx.fillStyle = gradient;
-          pinballGameState.ctx.fillRect(
-            pinballGameState.ball.x - pinballGameState.ball.radius - 5,
-            pinballGameState.ball.y - pinballGameState.ball.radius - 5,
-            (pinballGameState.ball.radius + 5) * 2,
-            (pinballGameState.ball.radius + 5) * 2
-          );
-
-          pinballGameState.ctx.fillStyle = '#FFD700';
-          pinballGameState.ctx.beginPath();
-          pinballGameState.ctx.arc(pinballGameState.ball.x, pinballGameState.ball.y, pinballGameState.ball.radius, 0, Math.PI * 2);
-          pinballGameState.ctx.fill();
-
-          // Bumpers
-          for (let bumper of pinballGameState.bumpers) {
-            pinballGameState.ctx.fillStyle = bumper.color;
-            pinballGameState.ctx.shadowColor = bumper.color;
-            pinballGameState.ctx.shadowBlur = 10;
-            pinballGameState.ctx.beginPath();
-            pinballGameState.ctx.arc(bumper.x, bumper.y, bumper.radius, 0, Math.PI * 2);
-            pinballGameState.ctx.fill();
-            pinballGameState.ctx.shadowBlur = 0;
-          }
-
-          // Flippers
-          const drawFlipper = (flipper, angle, color) => {
-            pinballGameState.ctx.save();
-            pinballGameState.ctx.translate(flipper.x, flipper.y);
-            pinballGameState.ctx.rotate(angle);
-            pinballGameState.ctx.fillStyle = color;
-            pinballGameState.ctx.fillRect(0, -flipper.height / 2, flipper.width, flipper.height);
-            pinballGameState.ctx.restore();
-          };
-
-          const leftAngle = pinballGameState.leftFlipper.active ? -0.4 : 0;
-          const rightAngle = pinballGameState.rightFlipper.active ? 0.4 : 0;
-          
-          drawFlipper(pinballGameState.leftFlipper, leftAngle, '#00FF88');
-          drawFlipper(pinballGameState.rightFlipper, rightAngle, '#FF0088');
-        }
-
-        function endPinballGame() {
-          pinballGameState.running = false;
-          
-          if (pinballGameState.score > pinballGameState.highscore) {
-            pinballGameState.highscore = pinballGameState.score;
-            localStorage.setItem('pinballHighscore', pinballGameState.highscore);
-            document.getElementById('pinballHighscore').textContent = pinballGameState.highscore;
-            
-            const highscoreMessage = `🏆 ${currentUser.name} got a new Pinball highscore: ${pinballGameState.score}!`;
             socket.emit('chat message', { 
               msg: highscoreMessage, 
               room,
