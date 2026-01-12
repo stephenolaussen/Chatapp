@@ -1528,6 +1528,13 @@
               flex-direction: column;
             }
             
+            @media (max-width: 600px) {
+              .pong-container {
+                padding: 1rem;
+                max-width: 100%;
+              }
+            }
+            
             .pong-header {
               text-align: center;
               margin-bottom: 1rem;
@@ -1549,13 +1556,24 @@
               border-radius: 8px;
               overflow: hidden;
               box-shadow: 0 0 30px rgba(67, 233, 123, 0.3), inset 0 0 20px rgba(67, 233, 123, 0.1);
+              width: 100%;
+              max-width: 400px;
+              aspect-ratio: 1;
+              margin-left: auto;
+              margin-right: auto;
+            }
+            
+            @media (max-width: 600px) {
+              .pong-canvas-wrapper {
+                max-width: 100%;
+                max-height: 60vh;
+              }
             }
             
             #pongCanvas {
               display: block;
               width: 100%;
-              height: auto;
-              max-width: 400px;
+              height: 100%;
               background: #0a0a0f;
             }
             
@@ -3466,9 +3484,13 @@
           pongGameState.aiPaddle.y = Math.max(0, Math.min(pongGameState.aiPaddle.y, pongGameState.canvas.height - pongGameState.aiPaddle.height));
 
           // Limit ball velocity to prevent tunneling
-          const maxVelocity = 8;
+          const maxVelocity = 6;
           pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
           pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
+
+          // Store previous position for continuous collision detection
+          const prevBallX = pongGameState.ball.x;
+          const prevBallY = pongGameState.ball.y;
 
           // Move ball
           pongGameState.ball.x += pongGameState.ball.vx;
@@ -3483,34 +3505,38 @@
             pongGameState.ball.vy = -pongGameState.ball.vy;
           }
 
-          // Ball hit player paddle - STRICT collision detection
-          if (pongGameState.ball.vx > 0 && // Ball moving right (towards AI)
-              pongGameState.lastHitPaddle !== 'player' &&
-              pongGameState.ball.x - pongGameState.ball.radius <= pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
-              pongGameState.ball.x - pongGameState.ball.radius >= pongGameState.playerPaddle.x - pongGameState.ball.radius &&
-              pongGameState.ball.y > pongGameState.playerPaddle.y - pongGameState.ball.radius && 
-              pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height + pongGameState.ball.radius) {
-            // Calculate paddle impact position and angle
-            const impactPos = (pongGameState.ball.y - pongGameState.playerPaddle.y) / pongGameState.playerPaddle.height;
-            pongGameState.ball.x = pongGameState.playerPaddle.x + pongGameState.playerPaddle.width + pongGameState.ball.radius;
-            pongGameState.ball.vx = Math.abs(pongGameState.ball.vx) * 1.05; // Always send right
-            pongGameState.ball.vy += (impactPos - 0.5) * 2; // Add spin based on paddle position
-            pongGameState.lastHitPaddle = 'player';
+          // Continuous collision detection for player paddle
+          if (pongGameState.ball.vx > 0 && pongGameState.lastHitPaddle !== 'player') {
+            // Check if ball crossed paddle line during this frame
+            if (prevBallX - pongGameState.ball.radius > pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
+                pongGameState.ball.x - pongGameState.ball.radius <= pongGameState.playerPaddle.x + pongGameState.playerPaddle.width) {
+              // Check Y collision
+              if (pongGameState.ball.y > pongGameState.playerPaddle.y - pongGameState.ball.radius && 
+                  pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height + pongGameState.ball.radius) {
+                const impactPos = (pongGameState.ball.y - pongGameState.playerPaddle.y) / pongGameState.playerPaddle.height;
+                pongGameState.ball.x = pongGameState.playerPaddle.x + pongGameState.playerPaddle.width + pongGameState.ball.radius + 1;
+                pongGameState.ball.vx = Math.abs(pongGameState.ball.vx) * 1.05;
+                pongGameState.ball.vy += (impactPos - 0.5) * 2;
+                pongGameState.lastHitPaddle = 'player';
+              }
+            }
           }
 
-          // Ball hit AI paddle - STRICT collision detection
-          if (pongGameState.ball.vx < 0 && // Ball moving left (towards player)
-              pongGameState.lastHitPaddle !== 'ai' &&
-              pongGameState.ball.x + pongGameState.ball.radius >= pongGameState.aiPaddle.x &&
-              pongGameState.ball.x + pongGameState.ball.radius <= pongGameState.aiPaddle.x + pongGameState.aiPaddle.width + pongGameState.ball.radius &&
-              pongGameState.ball.y > pongGameState.aiPaddle.y - pongGameState.ball.radius && 
-              pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height + pongGameState.ball.radius) {
-            // Calculate paddle impact position and angle
-            const impactPos = (pongGameState.ball.y - pongGameState.aiPaddle.y) / pongGameState.aiPaddle.height;
-            pongGameState.ball.x = pongGameState.aiPaddle.x - pongGameState.ball.radius;
-            pongGameState.ball.vx = -Math.abs(pongGameState.ball.vx) * 1.05; // Always send left
-            pongGameState.ball.vy += (impactPos - 0.5) * 2; // Add spin based on paddle position
-            pongGameState.lastHitPaddle = 'ai';
+          // Continuous collision detection for AI paddle
+          if (pongGameState.ball.vx < 0 && pongGameState.lastHitPaddle !== 'ai') {
+            // Check if ball crossed paddle line during this frame
+            if (prevBallX + pongGameState.ball.radius < pongGameState.aiPaddle.x &&
+                pongGameState.ball.x + pongGameState.ball.radius >= pongGameState.aiPaddle.x) {
+              // Check Y collision
+              if (pongGameState.ball.y > pongGameState.aiPaddle.y - pongGameState.ball.radius && 
+                  pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height + pongGameState.ball.radius) {
+                const impactPos = (pongGameState.ball.y - pongGameState.aiPaddle.y) / pongGameState.aiPaddle.height;
+                pongGameState.ball.x = pongGameState.aiPaddle.x - pongGameState.ball.radius - 1;
+                pongGameState.ball.vx = -Math.abs(pongGameState.ball.vx) * 1.05;
+                pongGameState.ball.vy += (impactPos - 0.5) * 2;
+                pongGameState.lastHitPaddle = 'ai';
+              }
+            }
           }
 
           // Ball out of bounds
