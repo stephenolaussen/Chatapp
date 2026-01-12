@@ -3629,12 +3629,13 @@
           leftFlipper: { x: 50, y: 450, width: 60, height: 12, angle: 0, active: false },
           rightFlipper: { x: 190, y: 450, width: 60, height: 12, angle: 0, active: false },
           bumpers: [],
+          bumperCooldowns: {},
           score: 0,
           highscore: localStorage.getItem('pinballHighscore') || 0,
           balls: 3,
           running: false,
-          gravity: 0.4,
-          friction: 0.998
+          gravity: 0.3,
+          friction: 0.995
         };
 
         pinballGameState.ctx = pinballGameState.canvas.getContext('2d');
@@ -3717,19 +3718,25 @@
           }
 
           // Bumper collisions
-          for (let bumper of pinballGameState.bumpers) {
+          for (let i = 0; i < pinballGameState.bumpers.length; i++) {
+            let bumper = pinballGameState.bumpers[i];
             const dx = pinballGameState.ball.x - bumper.x;
             const dy = pinballGameState.ball.y - bumper.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance < pinballGameState.ball.radius + bumper.radius) {
-              const angle = Math.atan2(dy, dx);
-              pinballGameState.ball.x = bumper.x + Math.cos(angle) * (pinballGameState.ball.radius + bumper.radius);
-              pinballGameState.ball.y = bumper.y + Math.sin(angle) * (pinballGameState.ball.radius + bumper.radius);
-              pinballGameState.ball.vx = Math.cos(angle) * 12;
-              pinballGameState.ball.vy = Math.sin(angle) * 12;
-              pinballGameState.score += 100;
-              document.getElementById('pinballScore').textContent = pinballGameState.score;
+              // Check cooldown - prevent rapid re-collisions
+              const now = Date.now();
+              if (!pinballGameState.bumperCooldowns[i] || now - pinballGameState.bumperCooldowns[i] > 200) {
+                const angle = Math.atan2(dy, dx);
+                pinballGameState.ball.x = bumper.x + Math.cos(angle) * (pinballGameState.ball.radius + bumper.radius + 2);
+                pinballGameState.ball.y = bumper.y + Math.sin(angle) * (pinballGameState.ball.radius + bumper.radius + 2);
+                pinballGameState.ball.vx = Math.cos(angle) * 14;
+                pinballGameState.ball.vy = Math.sin(angle) * 14;
+                pinballGameState.score += 100;
+                document.getElementById('pinballScore').textContent = pinballGameState.score;
+                pinballGameState.bumperCooldowns[i] = now;
+              }
             }
           }
 
