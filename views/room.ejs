@@ -1161,9 +1161,6 @@
             <button class="btn-game-select" onclick="selectGame('dodge')">
               🚗 Dodge
             </button>
-            <button class="btn-game-select" onclick="selectGame('spaceinvaders')">
-              👽 Space Invaders
-            </button>
           </div>
           <button class="btn-close-game" onclick="closeGameModal()" style="margin-top: 1rem; width: 100%;">Lukk</button>
         </div>
@@ -1573,244 +1570,6 @@
 
         <!-- Space Invaders Game -->
         <div id="spaceInvadersGame" style="display: none;">
-          <style>
-            .space-invaders-container {
-              background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%);
-              border-radius: 12px;
-              padding: 2rem;
-              max-width: 500px;
-              margin: 0 auto;
-              box-shadow: 0 8px 32px rgba(255, 100, 200, 0.2);
-            }
-            
-            .space-invaders-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 1.5rem;
-              flex-wrap: wrap;
-              gap: 1rem;
-            }
-            
-            .space-invaders-header h2 {
-              margin: 0;
-              font-size: 2rem;
-              background: linear-gradient(135deg, #FF00FF, #00FFFF);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-            }
-            
-            .space-invaders-stats {
-              display: flex;
-              gap: 1.5rem;
-              margin-bottom: 1.5rem;
-              justify-content: space-around;
-              flex-wrap: wrap;
-            }
-            
-            .space-invaders-stat-box {
-              background: rgba(255, 100, 200, 0.15);
-              padding: 1rem;
-              border-radius: 8px;
-              border-left: 3px solid #FF00FF;
-              text-align: center;
-              min-width: 120px;
-            }
-            
-            .space-invaders-stat-box .label {
-              font-size: 0.85rem;
-              color: #aaa;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-            }
-            
-            .space-invaders-stat-box .value {
-              font-size: 1.8rem;
-              font-weight: bold;
-              color: #00FFFF;
-              margin-top: 0.5rem;
-            }
-            
-            .wave-indicator {
-              text-align: center;
-              margin: 1rem 0;
-              font-size: 0.9rem;
-              color: #aaa;
-            }
-            
-            .wave-bar {
-              width: 100%;
-              height: 6px;
-              background: #333;
-              border-radius: 3px;
-              margin-top: 0.5rem;
-              overflow: hidden;
-            }
-            
-            .wave-fill {
-              height: 100%;
-              background: linear-gradient(90deg, #00FF00, #FFD700, #FF6B6B);
-              width: 20%;
-              transition: width 0.3s ease;
-            }
-            
-            .space-invaders-canvas-wrapper {
-              position: relative;
-              text-align: center;
-              margin-bottom: 1.5rem;
-            }
-            
-            #spaceInvadersCanvas {
-              display: block;
-              margin: 0 auto;
-              border: 2px solid #FF00FF;
-              border-radius: 8px;
-              cursor: crosshair;
-              touch-action: none;
-              background: #0a0a1a;
-              box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
-              max-width: 100%;
-              height: auto;
-            }
-            
-            .space-invaders-controls {
-              text-align: center;
-              margin-bottom: 1rem;
-            }
-            
-            .space-invaders-play-btn {
-              background: linear-gradient(135deg, #FF00FF, #FF1493);
-              color: #0a0a1a;
-              border: none;
-              padding: 1rem 2.5rem;
-              font-size: 1.1rem;
-              font-weight: bold;
-              border-radius: 8px;
-              cursor: pointer;
-              transition: all 0.3s ease;
-              box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3);
-            }
-            
-            .space-invaders-play-btn:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 20px rgba(255, 0, 255, 0.5);
-            }
-            
-            .space-invaders-instructions {
-              background: rgba(255, 0, 255, 0.1);
-              padding: 1rem;
-              border-radius: 8px;
-              font-size: 0.9rem;
-              color: #bbb;
-              text-align: center;
-              margin-bottom: 1rem;
-            }
-            
-            .space-invaders-gameover-overlay {
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: rgba(0, 0, 0, 0.9);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              z-index: 10000;
-              backdrop-filter: blur(4px);
-              pointer-events: none;
-            }
-            
-            .space-invaders-gameover-box {
-              background: linear-gradient(135deg, #0a0a1a, #1a0a2e);
-              padding: 2rem;
-              border-radius: 12px;
-              text-align: center;
-              border: 2px solid #FF00FF;
-              box-shadow: 0 8px 32px rgba(255, 0, 255, 0.3);
-            }
-            
-            .space-invaders-gameover-box h3 {
-              font-size: 2rem;
-              color: #FF1493;
-              margin-bottom: 1rem;
-            }
-            
-            .space-invaders-gameover-stat {
-              font-size: 1.1rem;
-              margin: 0.5rem 0;
-              color: #bbb;
-            }
-            
-            .space-invaders-gameover-stat .stat-value {
-              color: #00FFFF;
-              font-weight: bold;
-            }
-          </style>
-          
-          <div class="space-invaders-container">
-            <div class="space-invaders-header">
-              <h2>👽 Space Invaders</h2>
-            </div>
-            
-            <div class="space-invaders-stats">
-              <div class="space-invaders-stat-box">
-                <div class="label">Score</div>
-                <div class="value" id="spaceScore">0</div>
-              </div>
-              <div class="space-invaders-stat-box">
-                <div class="label">Highscore</div>
-                <div class="value" id="spaceHighscore">0</div>
-              </div>
-              <div class="space-invaders-stat-box">
-                <div class="label">Lives</div>
-                <div class="value" id="spaceLives">3</div>
-              </div>
-            </div>
-            
-            <div class="wave-indicator">
-              Wave: <span id="spaceWave">1</span>
-              <div class="wave-bar">
-                <div class="wave-fill" id="spacingWaveFill"></div>
-              </div>
-            </div>
-            
-            <div class="space-invaders-instructions">
-              <div>Arrow Keys or A/D to move, SPACE to shoot</div>
-              <div style="margin-top: 0.3rem; font-size: 0.8rem;">Destroy all aliens before they reach you!</div>
-            </div>
-            
-            <div class="space-invaders-canvas-wrapper">
-              <canvas id="spaceInvadersCanvas" width="400" height="500"></canvas>
-            </div>
-            
-            <div class="space-invaders-controls">
-              <button class="space-invaders-play-btn" onclick="startSpaceInvadersGame()" id="spacePlayBtn">▶️ Play</button>
-            </div>
-            
-            <div style="text-align: center;">
-              <button class="btn-close-game" onclick="backToGameMenu()" style="margin-top: 1rem;">⬅️ Tilbake</button>
-            </div>
-          </div>
-          
-          <!-- Game Over Overlay -->
-          <div class="space-invaders-gameover-overlay" id="spaceGameOverOverlay" style="display: none;">
-            <div class="space-invaders-gameover-box">
-              <h3>Game Over!</h3>
-              <div style="margin: 1.5rem 0;">
-                <div class="space-invaders-gameover-stat">Final Score: <span class="stat-value" id="spaceFinalScore">0</span></div>
-                <div class="space-invaders-gameover-stat">Wave Reached: <span class="stat-value" id="spaceFinalWave">1</span></div>
-              </div>
-              <div id="spaceNewHighscoreMsg" style="color: #FFD700; font-weight: bold; margin: 1rem 0; font-size: 1.2rem; display: none;">
-                🏆 NEW HIGHSCORE! 🏆
-              </div>
-              <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
-                <button class="btn-retry" onclick="startSpaceInvadersGame()">🔄 Try Again</button>
-                <button class="btn-back" onclick="backToGameMenu()">⬅️ Back</button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -3353,13 +3112,11 @@
           document.getElementById('bouncingBallGame').style.display = 'none';
           document.getElementById('pongGame').style.display = 'none';
           document.getElementById('dodgeGame').style.display = 'none';
-          document.getElementById('spaceInvadersGame').style.display = 'none';
           gameState.gameRunning = false;
           snakeGameState.running = false;
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
-          spaceInvadersState.running = false;
         }
 
         function closeGameModal() {
@@ -3369,7 +3126,6 @@
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
-          spaceInvadersState.running = false;
         }
 
         function drawBird() {
@@ -3835,7 +3591,12 @@
           }
         }
 
-        // ============ SPACE INVADERS GAME (CLASSIC ARCADE STYLE) ============
+        // Initialize on load
+        checkRoomPassword();
+        initializeUser();
+        updateUserDisplay();
+        requestNotificationPermission();
+    </script>
         let spaceInvadersState = {
           canvas: document.getElementById('spaceInvadersCanvas'),
           ctx: null,
