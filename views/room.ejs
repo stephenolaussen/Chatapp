@@ -3506,10 +3506,10 @@
           }
 
           // Continuous collision detection for player paddle
-          if (pongGameState.ball.vx > 0 && pongGameState.lastHitPaddle !== 'player') {
+          if (pongGameState.ball.vx < 0 && pongGameState.lastHitPaddle !== 'player') {
             // Check if ball crossed paddle line during this frame
-            if (prevBallX - pongGameState.ball.radius > pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
-                pongGameState.ball.x - pongGameState.ball.radius <= pongGameState.playerPaddle.x + pongGameState.playerPaddle.width) {
+            if (prevBallX + pongGameState.ball.radius > pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
+                pongGameState.ball.x + pongGameState.ball.radius <= pongGameState.playerPaddle.x + pongGameState.playerPaddle.width) {
               // Check Y collision
               if (pongGameState.ball.y > pongGameState.playerPaddle.y - pongGameState.ball.radius && 
                   pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height + pongGameState.ball.radius) {
@@ -3523,10 +3523,10 @@
           }
 
           // Continuous collision detection for AI paddle
-          if (pongGameState.ball.vx < 0 && pongGameState.lastHitPaddle !== 'ai') {
+          if (pongGameState.ball.vx > 0 && pongGameState.lastHitPaddle !== 'ai') {
             // Check if ball crossed paddle line during this frame
-            if (prevBallX + pongGameState.ball.radius > pongGameState.aiPaddle.x &&
-                pongGameState.ball.x + pongGameState.ball.radius <= pongGameState.aiPaddle.x) {
+            if (prevBallX - pongGameState.ball.radius < pongGameState.aiPaddle.x &&
+                pongGameState.ball.x - pongGameState.ball.radius >= pongGameState.aiPaddle.x) {
               // Check Y collision
               if (pongGameState.ball.y > pongGameState.aiPaddle.y - pongGameState.ball.radius && 
                   pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height + pongGameState.ball.radius) {
