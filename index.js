@@ -66,6 +66,7 @@ const messageSchema = new mongoose.Schema({
     color: { type: String, default: '#667eea' },
     timestamp: { type: Date, default: Date.now, index: true },
     isSystemMessage: { type: Boolean, default: false },
+    noNotification: { type: Boolean, default: false },
     reactions: { type: Map, of: [String], default: new Map() } // Store reactions: { '👍': ['user1', 'user2'], '❤️': ['user1'] }
 });
 
@@ -521,10 +522,10 @@ app.get('/check-messages/:room', async (req, res) => {
             lastMessageTime[room] = 0;
         }
         
-        // Get messages since last check
+        // Get messages since last check (excluding messages with noNotification flag)
         const newMessages = messages.filter(msg => {
             const msgTime = new Date(msg.timestamp).getTime();
-            return msgTime > lastMessageTime[room];
+            return msgTime > lastMessageTime[room] && !msg.noNotification;
         });
         
         // Update last message time
@@ -635,7 +636,8 @@ async function saveRoomMessage(room, message) {
                 sender: message.sender,
                 color: message.color,
                 timestamp: message.timestamp,
-                isSystemMessage: message.isSystemMessage || false
+                isSystemMessage: message.isSystemMessage || false,
+                noNotification: message.noNotification || false
             });
             await msg.save();
         } else {
