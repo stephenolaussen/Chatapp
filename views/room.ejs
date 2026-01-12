@@ -3004,15 +3004,19 @@
         function handleDodgeMouseMove(e) {
           if (!dodgeGameState.running) return;
           const rect = dodgeGameState.canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          dodgeGameState.player.x = Math.max(0, Math.min(x - dodgeGameState.player.width / 2, dodgeGameState.canvas.width - dodgeGameState.player.width));
+          const scaleX = dodgeGameState.canvas.width / rect.width;
+          const x = (e.clientX - rect.left) * scaleX;
+          const centerX = x - dodgeGameState.player.width / 2;
+          dodgeGameState.player.x = Math.max(0, Math.min(centerX, dodgeGameState.canvas.width - dodgeGameState.player.width));
         }
 
         function handleDodgeTouchMove(e) {
           if (!dodgeGameState.running) return;
           const rect = dodgeGameState.canvas.getBoundingClientRect();
-          const x = e.touches[0].clientX - rect.left;
-          dodgeGameState.player.x = Math.max(0, Math.min(x - dodgeGameState.player.width / 2, dodgeGameState.canvas.width - dodgeGameState.player.width));
+          const scaleX = dodgeGameState.canvas.width / rect.width;
+          const x = (e.touches[0].clientX - rect.left) * scaleX;
+          const centerX = x - dodgeGameState.player.width / 2;
+          dodgeGameState.player.x = Math.max(0, Math.min(centerX, dodgeGameState.canvas.width - dodgeGameState.player.width));
         }
 
         function handleDodgeKeydown(e) {
