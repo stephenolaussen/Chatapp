@@ -2710,6 +2710,13 @@
         snakeGameState.ctx = snakeGameState.canvas.getContext('2d');
 
         function startSnakeGame() {
+          // First, remove all previous event listeners to prevent conflicts
+          const oldCanvas = snakeGameState.canvas;
+          const newCanvas = oldCanvas.cloneNode(true);
+          oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+          snakeGameState.canvas = newCanvas;
+          snakeGameState.ctx = snakeGameState.canvas.getContext('2d');
+          
           snakeGameState.snake = [{x: 200, y: 200}];
           snakeGameState.direction = {x: 1, y: 0};
           snakeGameState.nextDirection = {x: 1, y: 0};
@@ -2720,7 +2727,13 @@
           snakeGameState.gameRunning = true;
           document.getElementById('snakeScore').textContent = '0';
           document.getElementById('snakeLength').textContent = '1';
-          document.getElementById('snakeGameOverOverlay').style.display = 'none';
+          document.getElementById('snakeDifficultyText').textContent = 'Easy';
+          document.getElementById('difficultyFill').style.width = '0%';
+          
+          // Hide and disable the overlay completely
+          const overlay = document.getElementById('snakeGameOverOverlay');
+          overlay.style.display = 'none';
+          overlay.style.pointerEvents = 'none';
           
           // Hide play button
           document.getElementById('snakePlayBtn').style.display = 'none';
@@ -2954,8 +2967,9 @@
           snakeGameState.running = false;
           document.removeEventListener('keydown', handleSnakeKeydown);
           
-          // Show game over overlay
+          // Show game over overlay with proper pointer events
           const overlay = document.getElementById('snakeGameOverOverlay');
+          overlay.style.pointerEvents = 'auto';
           overlay.style.display = 'flex';
           document.getElementById('finalScore').textContent = snakeGameState.score;
           document.getElementById('finalLength').textContent = snakeGameState.snake.length;
@@ -2964,14 +2978,14 @@
           const isNewHighscore = snakeGameState.score > snakeGameState.highscore;
           newHighscoreMsg.style.display = isNewHighscore ? 'block' : 'none';
           
-          // Show play button again (after a short delay so they see the overlay first)
-          setTimeout(() => {
-            document.getElementById('snakePlayBtn').style.display = 'block';
-          }, 100);
-          
-          // Restore scrolling
+          // Restore scrolling immediately
           document.body.style.overflow = 'auto';
           document.documentElement.style.overflow = 'auto';
+          
+          // Show play button after overlay is visible
+          setTimeout(() => {
+            document.getElementById('snakePlayBtn').style.display = 'block';
+          }, 200);
 
           if (isNewHighscore) {
             snakeGameState.highscore = snakeGameState.score;
