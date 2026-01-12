@@ -802,6 +802,7 @@ admin.on('connection', (socket) => {
                 sender: data.sender || 'System',
                 color: data.color || '#FFD700',
                 isSystemMessage: true,
+                noNotification: data.noNotification || false,
                 timestamp: new Date()
             };
             
