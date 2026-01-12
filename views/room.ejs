@@ -2196,38 +2196,46 @@
         let ballGameState = {
           canvas: document.getElementById('ballCanvas'),
           ctx: null,
-          paddle: {x: 175, y: 380, width: 50, height: 10, speed: 8},
-          ball: {x: 200, y: 200, radius: 8, vx: 3, vy: -3},
+          paddle: {x: 175, y: 380, width: 50, height: 12, speed: 8},
+          ball: {x: 200, y: 200, radius: 6, vx: 3, vy: -3},
           score: 0,
           highscore: localStorage.getItem('ballHighscore') || 0,
           running: false,
           gameRunning: false,
           bricks: [],
-          brickRows: 3,
-          brickCols: 8,
+          brickRows: 5,
+          brickCols: 10,
           level: 1,
           bricksDestroyed: 0,
-          totalBricks: 0
+          totalBricks: 0,
+          brickColors: ['#FF6B6B', '#FFA726', '#FFD93D', '#6BCB77', '#4D96FF', '#9D6BE8', '#FF69B4', '#00CEC9', '#74B9FF', '#A29BFE']
         };
 
         ballGameState.ctx = ballGameState.canvas.getContext('2d');
 
         function initBallGame() {
           ballGameState.bricks = [];
-          const brickWidth = ballGameState.canvas.width / ballGameState.brickCols;
-          const brickHeight = 20;
+          const brickWidth = Math.floor(ballGameState.canvas.width / ballGameState.brickCols);
+          const brickHeight = 16;
+          const startY = 30;
           
-          // Increase rows per level
-          const rows = Math.min(3 + Math.floor(ballGameState.level / 2), 6);
+          // Create colorful brick rows - more rows for classic breakout feel
+          const rowsPerLevel = 4 + Math.floor(ballGameState.level / 2);
+          const maxRows = 7;
+          const rows = Math.min(rowsPerLevel, maxRows);
           
           for (let row = 0; row < rows; row++) {
+            const colorIndex = row % ballGameState.brickColors.length;
+            const color = ballGameState.brickColors[colorIndex];
+            
             for (let col = 0; col < ballGameState.brickCols; col++) {
               ballGameState.bricks.push({
                 x: col * brickWidth,
-                y: row * brickHeight + 20,
-                width: brickWidth,
+                y: row * (brickHeight + 4) + startY,
+                width: brickWidth - 2,
                 height: brickHeight,
-                active: true
+                active: true,
+                color: color
               });
             }
           }
@@ -2241,10 +2249,10 @@
           ballGameState.running = true;
           ballGameState.gameRunning = true;
           ballGameState.level = 1;
-          ballGameState.paddle = {x: 175, y: 380, width: 50, height: 10, speed: 8};
+          ballGameState.paddle = {x: 175, y: 380, width: 50, height: 12, speed: 8};
           // Increase ball speed per level
-          const baseSpeed = 3 + (ballGameState.level - 1) * 0.5;
-          ballGameState.ball = {x: 200, y: 200, radius: 8, vx: baseSpeed, vy: -baseSpeed};
+          const baseSpeed = 3.5 + (ballGameState.level - 1) * 0.7;
+          ballGameState.ball = {x: 200, y: 300, radius: 6, vx: baseSpeed * 0.7, vy: -baseSpeed};
           document.getElementById('ballScore').textContent = '0';
           
           initBallGame();
@@ -2282,6 +2290,7 @@
           // Bounce off walls
           if (ballGameState.ball.x - ballGameState.ball.radius < 0 || ballGameState.ball.x + ballGameState.ball.radius > ballGameState.canvas.width) {
             ballGameState.ball.vx = -ballGameState.ball.vx;
+            ballGameState.ball.x = Math.max(ballGameState.ball.radius, Math.min(ballGameState.ball.x, ballGameState.canvas.width - ballGameState.ball.radius));
           }
           if (ballGameState.ball.y - ballGameState.ball.radius < 0) {
             ballGameState.ball.vy = -ballGameState.ball.vy;
@@ -2293,64 +2302,103 @@
             return;
           }
 
-          // Check paddle collision
+          // Check paddle collision with better physics
           if (ballGameState.ball.y + ballGameState.ball.radius > ballGameState.paddle.y &&
               ballGameState.ball.y - ballGameState.ball.radius < ballGameState.paddle.y + ballGameState.paddle.height &&
               ballGameState.ball.x > ballGameState.paddle.x &&
               ballGameState.ball.x < ballGameState.paddle.x + ballGameState.paddle.width) {
-            ballGameState.ball.vy = -ballGameState.ball.vy;
+            ballGameState.ball.vy = -Math.abs(ballGameState.ball.vy);
             ballGameState.ball.y = ballGameState.paddle.y - ballGameState.ball.radius;
+            
+            // Add spin based on where ball hits paddle
+            const paddleCenter = ballGameState.paddle.x + ballGameState.paddle.width / 2;
+            const hitPos = (ballGameState.ball.x - paddleCenter) / (ballGameState.paddle.width / 2);
+            ballGameState.ball.vx += hitPos * 3;
           }
 
-          // Check brick collisions
-          for (let brick of ballGameState.bricks) {
+          // Check brick collisions with better detection
+          for (let i = 0; i < ballGameState.bricks.length; i++) {
+            const brick = ballGameState.bricks[i];
             if (!brick.active) continue;
             
-            if (ballGameState.ball.x > brick.x && ballGameState.ball.x < brick.x + brick.width &&
-                ballGameState.ball.y > brick.y && ballGameState.ball.y < brick.y + brick.height) {
+            // Simple AABB collision detection
+            if (ballGameState.ball.x + ballGameState.ball.radius > brick.x &&
+                ballGameState.ball.x - ballGameState.ball.radius < brick.x + brick.width &&
+                ballGameState.ball.y + ballGameState.ball.radius > brick.y &&
+                ballGameState.ball.y - ballGameState.ball.radius < brick.y + brick.height) {
+              
               brick.active = false;
               ballGameState.bricksDestroyed++;
               ballGameState.score += 10;
               document.getElementById('ballScore').textContent = ballGameState.score;
-              ballGameState.ball.vy = -ballGameState.ball.vy;
+              
+              // Determine collision side and bounce accordingly
+              const overlapLeft = (ballGameState.ball.x + ballGameState.ball.radius) - brick.x;
+              const overlapRight = (brick.x + brick.width) - (ballGameState.ball.x - ballGameState.ball.radius);
+              const overlapTop = (ballGameState.ball.y + ballGameState.ball.radius) - brick.y;
+              const overlapBottom = (brick.y + brick.height) - (ballGameState.ball.y - ballGameState.ball.radius);
+              
+              const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+              
+              if (minOverlap === overlapLeft || minOverlap === overlapRight) {
+                ballGameState.ball.vx = -ballGameState.ball.vx;
+              } else {
+                ballGameState.ball.vy = -ballGameState.ball.vy;
+              }
               
               // Check if all bricks destroyed - next level!
               if (ballGameState.bricksDestroyed >= ballGameState.totalBricks) {
                 ballGameState.level++;
-                ballGameState.paddle.width = Math.max(30, 50 - ballGameState.level * 2); // Smaller paddle each level
-                const baseSpeed = 3 + (ballGameState.level - 1) * 0.5;
-                ballGameState.ball = {x: 200, y: 200, radius: 8, vx: baseSpeed, vy: -baseSpeed};
+                ballGameState.paddle.width = Math.max(35, 50 - ballGameState.level * 1.5);
+                const baseSpeed = 3.5 + (ballGameState.level - 1) * 0.7;
+                ballGameState.ball = {x: 200, y: 300, radius: 6, vx: baseSpeed * 0.7, vy: -baseSpeed};
                 initBallGame();
               }
             }
           }
 
-          // Draw
-          ballGameState.ctx.fillStyle = '#f0f0f0';
+          // Draw background
+          ballGameState.ctx.fillStyle = '#1a1a2e';
           ballGameState.ctx.fillRect(0, 0, ballGameState.canvas.width, ballGameState.canvas.height);
 
           // Draw level info
-          ballGameState.ctx.fillStyle = '#666';
-          ballGameState.ctx.font = '14px Arial';
+          ballGameState.ctx.fillStyle = '#fff';
+          ballGameState.ctx.font = 'bold 14px Arial';
           ballGameState.ctx.fillText(`Level: ${ballGameState.level}`, 10, 20);
 
-          // Draw bricks
+          // Draw bricks with colors and borders
           for (let brick of ballGameState.bricks) {
             if (brick.active) {
-              ballGameState.ctx.fillStyle = '#667eea';
-              ballGameState.ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+              ballGameState.ctx.fillStyle = brick.color;
+              ballGameState.ctx.fillRect(brick.x + 1, brick.y + 1, brick.width - 2, brick.height - 2);
+              
+              // Brick border/highlight
+              ballGameState.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+              ballGameState.ctx.lineWidth = 1;
+              ballGameState.ctx.strokeRect(brick.x + 1, brick.y + 1, brick.width - 2, brick.height - 2);
             }
           }
 
-          // Draw paddle
-          ballGameState.ctx.fillStyle = '#764ba2';
+          // Draw paddle with gradient
+          const paddleGradient = ballGameState.ctx.createLinearGradient(ballGameState.paddle.x, ballGameState.paddle.y, ballGameState.paddle.x, ballGameState.paddle.y + ballGameState.paddle.height);
+          paddleGradient.addColorStop(0, '#00CEC9');
+          paddleGradient.addColorStop(1, '#0084B4');
+          ballGameState.ctx.fillStyle = paddleGradient;
           ballGameState.ctx.fillRect(ballGameState.paddle.x, ballGameState.paddle.y, ballGameState.paddle.width, ballGameState.paddle.height);
+          
+          // Paddle border
+          ballGameState.ctx.strokeStyle = '#fff';
+          ballGameState.ctx.lineWidth = 2;
+          ballGameState.ctx.strokeRect(ballGameState.paddle.x, ballGameState.paddle.y, ballGameState.paddle.width, ballGameState.paddle.height);
 
-          // Draw ball
-          ballGameState.ctx.fillStyle = '#FF6B6B';
+          // Draw ball with glow
+          ballGameState.ctx.fillStyle = '#FFD700';
+          ballGameState.ctx.shadowColor = '#FFD700';
+          ballGameState.ctx.shadowBlur = 10;
           ballGameState.ctx.beginPath();
           ballGameState.ctx.arc(ballGameState.ball.x, ballGameState.ball.y, ballGameState.ball.radius, 0, Math.PI * 2);
           ballGameState.ctx.fill();
+          ballGameState.ctx.shadowBlur = 0;
 
           requestAnimationFrame(ballGameLoop);
         }
