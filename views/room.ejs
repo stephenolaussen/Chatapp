@@ -3254,7 +3254,8 @@
           highscore: localStorage.getItem('pongHighscore') || 0,
           running: false,
           gameRunning: false,
-          playerDir: 0
+          playerDir: 0,
+          lastHitPaddle: null
         };
 
         pongGameState.ctx = pongGameState.canvas.getContext('2d');
@@ -3344,13 +3345,17 @@
 
           // Ball hit paddles
           if (pongGameState.ball.x - pongGameState.ball.radius < pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
-              pongGameState.ball.y > pongGameState.playerPaddle.y && pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height) {
+              pongGameState.ball.y > pongGameState.playerPaddle.y && pongGameState.ball.y < pongGameState.playerPaddle.y + pongGameState.playerPaddle.height &&
+              pongGameState.lastHitPaddle !== 'player') {
             pongGameState.ball.vx = -pongGameState.ball.vx;
+            pongGameState.lastHitPaddle = 'player';
           }
 
           if (pongGameState.ball.x + pongGameState.ball.radius > pongGameState.aiPaddle.x &&
-              pongGameState.ball.y > pongGameState.aiPaddle.y && pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height) {
+              pongGameState.ball.y > pongGameState.aiPaddle.y && pongGameState.ball.y < pongGameState.aiPaddle.y + pongGameState.aiPaddle.height &&
+              pongGameState.lastHitPaddle !== 'ai') {
             pongGameState.ball.vx = -pongGameState.ball.vx;
+            pongGameState.lastHitPaddle = 'ai';
           }
 
           // Ball out of bounds
@@ -3360,6 +3365,7 @@
             const randomVx = -(2 + Math.random() * 2);
             const randomVy = (Math.random() - 0.5) * 4;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
+            pongGameState.lastHitPaddle = null;
           } else if (pongGameState.ball.x > pongGameState.canvas.width) {
             pongGameState.score++;
             document.getElementById('pongScore').textContent = pongGameState.score;
@@ -3367,6 +3373,7 @@
             const randomVx = 2 + Math.random() * 2;
             const randomVy = (Math.random() - 0.5) * 4;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
+            pongGameState.lastHitPaddle = null;
           }
 
           if (pongGameState.aiScore >= 5) {
