@@ -3625,7 +3625,7 @@
         let pinballGameState = {
           canvas: document.getElementById('pinballCanvas'),
           ctx: null,
-          ball: { x: 150, y: 400, radius: 6, vx: 0, vy: 0 },
+          ball: { x: 150, y: 50, radius: 6, vx: 0, vy: 0 },
           leftFlipper: { x: 50, y: 450, width: 60, height: 12, angle: 0, active: false },
           rightFlipper: { x: 190, y: 450, width: 60, height: 12, angle: 0, active: false },
           bumpers: [],
@@ -3634,7 +3634,7 @@
           highscore: localStorage.getItem('pinballHighscore') || 0,
           balls: 3,
           running: false,
-          gravity: 0.3,
+          gravity: 0.35,
           friction: 0.995
         };
 
@@ -3762,7 +3762,7 @@
               endPinballGame();
               return;
             }
-            pinballGameState.ball = { x: 150, y: 100, radius: 6, vx: 0, vy: 0 };
+            pinballGameState.ball = { x: 150, y: 50, radius: 6, vx: 0, vy: 0 };
           }
 
           drawPinball();
