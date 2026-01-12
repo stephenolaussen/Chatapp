@@ -809,8 +809,8 @@ admin.on('connection', (socket) => {
             // Broadcast to all clients in the room
             admin.in(data.room).emit('chat message', messageData);
             
-            // Send via SSE for background notifications
-            if (sseClients[data.room]) {
+            // Send via SSE for background notifications (but respect noNotification flag)
+            if (sseClients[data.room] && !data.noNotification) {
                 sseClients[data.room].forEach(client => {
                     client.write(`data: ${JSON.stringify({
                         type: 'system-message',
