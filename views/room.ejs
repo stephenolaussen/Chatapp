@@ -1986,13 +1986,18 @@
               applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
 
-            // Send subscription to server
+            // Send subscription to server with user email
+            const subscriptionData = {
+              ...subscription.toJSON(),
+              email: (typeof currentUser !== 'undefined' && currentUser.email) ? currentUser.email : null
+            };
+
             const response = await fetch('/subscribe', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify(subscription)
+              body: JSON.stringify(subscriptionData)
             });
 
             if (response.ok) {

@@ -78,10 +78,23 @@ const subscriptionSchema = new mongoose.Schema({
         p256dh: { type: String, required: true },
         auth: { type: String, required: true }
     },
+    email: { type: String, lowercase: true }, // Track which user owns this subscription
     createdAt: { type: Date, default: Date.now }
 });
 
 const Subscription = mongoose.model('Subscription', subscriptionSchema);
+
+// Room Notification Whitelist Schema - for room-specific notification settings
+const roomNotificationSchema = new mongoose.Schema({
+    room: { type: String, required: true, lowercase: true },
+    emails: [{ type: String, lowercase: true }], // Array of emails allowed to get notifications
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+roomNotificationSchema.index({ room: 1 }, { unique: true });
+
+const RoomNotification = mongoose.model('RoomNotification', roomNotificationSchema);
 
 // Whitelist Schema - for authorized users
 const whitelistSchema = new mongoose.Schema({
@@ -303,6 +316,56 @@ app.post('/api/admin/whitelist/remove', jsonParser, async (req, res) => {
     }
 });
 
+// API to get room notification whitelist
+app.get('/api/admin/room-notifications/:room', (req, res) => {
+    if (!req.session.adminAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        if (!mongoConnected || !RoomNotification) {
+            return res.json({ room: req.params.room, emails: [] });
+        }
+        
+        RoomNotification.findOne({ room: req.params.room.toLowerCase() }).then(doc => {
+            if (doc) {
+                res.json({ room: doc.room, emails: doc.emails });
+            } else {
+                res.json({ room: req.params.room, emails: [] });
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API to update room notification whitelist
+app.post('/api/admin/room-notifications/:room', jsonParser, (req, res) => {
+    if (!req.session.adminAuth) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const { emails } = req.body;
+        const room = req.params.room.toLowerCase();
+        
+        if (!mongoConnected || !RoomNotification) {
+            return res.status(500).json({ error: 'Database not ready' });
+        }
+        
+        // Normalize and lowercase emails
+        const normalizedEmails = (emails || []).map(e => e.toLowerCase());
+        
+        RoomNotification.updateOne(
+            { room },
+            { room, emails: normalizedEmails, updatedAt: new Date() },
+            { upsert: true }
+        ).then(() => {
+            res.json({ success: true, room, emails: normalizedEmails });
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Protected chat route - require authentication
 app.get('/', isAuthenticated, (req, res) => {
     const roomsForDisplay = rooms.map(r => typeof r === 'string' ? r : r.name);
@@ -327,6 +390,7 @@ app.get('/vapid-public-key', (req, res) => {
 // Subscribe to push notifications
 app.post('/subscribe', jsonParser, async (req, res) => {
     const subscription = req.body;
+    const email = req.user ? req.user.email : req.body.email;
     
     if (!subscription || !subscription.endpoint) {
         return res.status(400).json({ success: false, message: 'Invalid subscription' });
@@ -334,10 +398,10 @@ app.post('/subscribe', jsonParser, async (req, res) => {
     
     try {
         if (mongoConnected && Subscription) {
-            // Save subscription to MongoDB
+            // Save subscription to MongoDB with email
             await Subscription.updateOne(
                 { endpoint: subscription.endpoint },
-                { ...subscription },
+                { ...subscription, email: email ? email.toLowerCase() : undefined },
                 { upsert: true }
             );
         } else {
@@ -349,7 +413,7 @@ app.post('/subscribe', jsonParser, async (req, res) => {
             }
             // Remove if exists, then add new
             subs = subs.filter(s => s.endpoint !== subscription.endpoint);
-            subs.push(subscription);
+            subs.push({ ...subscription, email: email ? email.toLowerCase() : undefined });
             fs.writeFileSync(subscriptionsFile, JSON.stringify(subs, null, 2));
         }
         
@@ -360,8 +424,8 @@ app.post('/subscribe', jsonParser, async (req, res) => {
     }
 });
 
-// Helper to send push notifications to all subscribers
-async function sendPushNotificationToAll(title, options) {
+// Helper to send push notifications to subscribers based on room whitelist
+async function sendPushNotificationToAll(title, options, room = null) {
     if (!webPushEnabled) {
         return; // Skip if Web Push not enabled
     }
@@ -379,7 +443,27 @@ async function sendPushNotificationToAll(title, options) {
             }
         }
         
-        const promises = subscriptions.map(sub => {
+        // If room is specified, check room notification whitelist
+        let allowedEmails = null;
+        if (room && mongoConnected && RoomNotification) {
+            const roomNotif = await RoomNotification.findOne({ room: room.toLowerCase() });
+            if (roomNotif && roomNotif.emails && roomNotif.emails.length > 0) {
+                allowedEmails = roomNotif.emails.map(e => e.toLowerCase());
+            }
+        }
+        
+        // Filter subscriptions based on room whitelist if applicable
+        const filteredSubscriptions = subscriptions.filter(sub => {
+            if (allowedEmails === null) {
+                // No whitelist for this room, allow all
+                return true;
+            }
+            // Check if subscription's email is in the whitelist
+            const subEmail = sub.email ? sub.email.toLowerCase() : null;
+            return subEmail && allowedEmails.includes(subEmail);
+        });
+        
+        const promises = filteredSubscriptions.map(sub => {
             return webpush.sendNotification(sub, JSON.stringify({
                 title: title,
                 options: options
@@ -762,7 +846,8 @@ admin.on('connection', (socket) => {
                         sender: data.sender,
                         timestamp: Date.now()
                     }
-                }
+                },
+                data.room
             );
             
             // Send via SSE for background notifications (only regular messages)
@@ -810,7 +895,8 @@ admin.on('connection', (socket) => {
                                         room: room,
                                         type: 'reaction'
                                     }
-                                }
+                                },
+                                room
                             );
                         }
                     }
