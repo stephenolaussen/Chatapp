@@ -2254,14 +2254,16 @@
         function handleBallMouseMove(e) {
           if (!ballGameState.running) return;
           const rect = ballGameState.canvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
+          const scaleX = ballGameState.canvas.width / rect.width;
+          const x = (e.clientX - rect.left) * scaleX;
           ballGameState.paddle.x = Math.max(0, Math.min(x - ballGameState.paddle.width / 2, ballGameState.canvas.width - ballGameState.paddle.width));
         }
 
         function handleBallTouchMove(e) {
           if (!ballGameState.running) return;
           const rect = ballGameState.canvas.getBoundingClientRect();
-          const x = e.touches[0].clientX - rect.left;
+          const scaleX = ballGameState.canvas.width / rect.width;
+          const x = (e.touches[0].clientX - rect.left) * scaleX;
           ballGameState.paddle.x = Math.max(0, Math.min(x - ballGameState.paddle.width / 2, ballGameState.canvas.width - ballGameState.paddle.width));
         }
 
