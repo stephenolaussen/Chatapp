@@ -2443,7 +2443,9 @@
           highscore: localStorage.getItem('snakeHighscore') || 0,
           running: false,
           gameRunning: false,
-          gridSize: 20
+          gridSize: 20,
+          gameSpeed: 8,
+          frameCount: 0
         };
 
         snakeGameState.ctx = snakeGameState.canvas.getContext('2d');
@@ -2453,6 +2455,8 @@
           snakeGameState.direction = {x: 1, y: 0};
           snakeGameState.nextDirection = {x: 1, y: 0};
           snakeGameState.score = 0;
+          snakeGameState.gameSpeed = 8;
+          snakeGameState.frameCount = 0;
           snakeGameState.running = true;
           snakeGameState.gameRunning = true;
           document.getElementById('snakeScore').textContent = '0';
@@ -2529,17 +2533,33 @@
           // Prevent moving backwards into itself
           if (key === 'arrowup' || key === 'w') {
             if (snakeGameState.direction.y === 0) snakeGameState.nextDirection = {x: 0, y: -1};
+            e.preventDefault();
           } else if (key === 'arrowdown' || key === 's') {
             if (snakeGameState.direction.y === 0) snakeGameState.nextDirection = {x: 0, y: 1};
+            e.preventDefault();
           } else if (key === 'arrowleft' || key === 'a') {
             if (snakeGameState.direction.x === 0) snakeGameState.nextDirection = {x: -1, y: 0};
+            e.preventDefault();
           } else if (key === 'arrowright' || key === 'd') {
             if (snakeGameState.direction.x === 0) snakeGameState.nextDirection = {x: 1, y: 0};
+            e.preventDefault();
           }
         }
 
         function snakeGameLoop() {
           if (!snakeGameState.running) return;
+
+          snakeGameState.frameCount++;
+          
+          // Only update snake position every N frames (game speed control)
+          if (snakeGameState.frameCount < snakeGameState.gameSpeed) {
+            // Draw while waiting
+            drawSnakeGame();
+            requestAnimationFrame(snakeGameLoop);
+            return;
+          }
+          
+          snakeGameState.frameCount = 0;
 
           // Update direction
           snakeGameState.direction = snakeGameState.nextDirection;
@@ -2572,6 +2592,10 @@
           if (newHead.x === snakeGameState.food.x && newHead.y === snakeGameState.food.y) {
             snakeGameState.score += 10;
             document.getElementById('snakeScore').textContent = snakeGameState.score;
+            
+            // Increase difficulty as snake grows
+            snakeGameState.gameSpeed = Math.max(3, 8 - Math.floor(snakeGameState.snake.length / 5));
+            
             snakeGameState.food = {
               x: Math.floor(Math.random() * (snakeGameState.canvas.width / snakeGameState.gridSize)) * snakeGameState.gridSize,
               y: Math.floor(Math.random() * (snakeGameState.canvas.height / snakeGameState.gridSize)) * snakeGameState.gridSize
@@ -2580,21 +2604,63 @@
             snakeGameState.snake.pop();
           }
 
-          // Draw
-          snakeGameState.ctx.fillStyle = '#f0f0f0';
+          drawSnakeGame();
+          requestAnimationFrame(snakeGameLoop);
+        }
+
+        function drawSnakeGame() {
+          // Draw background
+          snakeGameState.ctx.fillStyle = '#1a1a2e';
           snakeGameState.ctx.fillRect(0, 0, snakeGameState.canvas.width, snakeGameState.canvas.height);
 
-          // Draw snake
-          snakeGameState.ctx.fillStyle = '#667eea';
-          for (let segment of snakeGameState.snake) {
-            snakeGameState.ctx.fillRect(segment.x, segment.y, snakeGameState.gridSize - 2, snakeGameState.gridSize - 2);
+          // Draw grid
+          snakeGameState.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+          snakeGameState.ctx.lineWidth = 0.5;
+          for (let i = 0; i <= snakeGameState.canvas.width; i += snakeGameState.gridSize) {
+            snakeGameState.ctx.beginPath();
+            snakeGameState.ctx.moveTo(i, 0);
+            snakeGameState.ctx.lineTo(i, snakeGameState.canvas.height);
+            snakeGameState.ctx.stroke();
+            snakeGameState.ctx.beginPath();
+            snakeGameState.ctx.moveTo(0, i);
+            snakeGameState.ctx.lineTo(snakeGameState.canvas.width, i);
+            snakeGameState.ctx.stroke();
           }
 
-          // Draw food
-          snakeGameState.ctx.fillStyle = '#FF6B6B';
-          snakeGameState.ctx.fillRect(snakeGameState.food.x, snakeGameState.food.y, snakeGameState.gridSize - 2, snakeGameState.gridSize - 2);
+          // Draw snake with head highlight
+          for (let i = 0; i < snakeGameState.snake.length; i++) {
+            const segment = snakeGameState.snake[i];
+            if (i === 0) {
+              // Head - brighter color with glow
+              snakeGameState.ctx.fillStyle = '#00FF00';
+              snakeGameState.ctx.shadowColor = '#00FF00';
+              snakeGameState.ctx.shadowBlur = 8;
+            } else {
+              // Body - darker green with gradient
+              const opacity = 1 - (i / snakeGameState.snake.length) * 0.3;
+              snakeGameState.ctx.fillStyle = `rgba(100, 200, 100, ${opacity})`;
+              snakeGameState.ctx.shadowBlur = 0;
+            }
+            snakeGameState.ctx.fillRect(segment.x + 1, segment.y + 1, snakeGameState.gridSize - 2, snakeGameState.gridSize - 2);
+          }
+          snakeGameState.ctx.shadowBlur = 0;
 
-          setTimeout(snakeGameLoop, 100);
+          // Draw food with pulsing effect
+          const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+          snakeGameState.ctx.fillStyle = `rgba(255, 107, 107, ${pulse})`;
+          snakeGameState.ctx.shadowColor = '#FF6B6B';
+          snakeGameState.ctx.shadowBlur = 8;
+          snakeGameState.ctx.beginPath();
+          const foodSize = (snakeGameState.gridSize - 2) * 0.6;
+          snakeGameState.ctx.arc(
+            snakeGameState.food.x + snakeGameState.gridSize / 2,
+            snakeGameState.food.y + snakeGameState.gridSize / 2,
+            foodSize / 2,
+            0,
+            Math.PI * 2
+          );
+          snakeGameState.ctx.fill();
+          snakeGameState.ctx.shadowBlur = 0;
         }
 
         function endSnakeGame() {
