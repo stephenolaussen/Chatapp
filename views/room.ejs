@@ -3557,8 +3557,10 @@
             pongGameState.lastHitPaddle = null;
           }
 
-          // Clear lastHitPaddle flag when ball is in center area - safer clearing
-          if (pongGameState.ball.x > 120 && pongGameState.ball.x < 280) {
+          // Clear lastHitPaddle flag only when ball is moving away from the paddle it last hit
+          if (pongGameState.lastHitPaddle === 'player' && pongGameState.ball.vx > 0) {
+            pongGameState.lastHitPaddle = null;
+          } else if (pongGameState.lastHitPaddle === 'ai' && pongGameState.ball.vx < 0) {
             pongGameState.lastHitPaddle = null;
           }
 
