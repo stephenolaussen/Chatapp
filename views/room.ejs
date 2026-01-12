@@ -3404,7 +3404,7 @@
           running: false,
           gameRunning: false,
           playerDir: 0,
-          lastHitPaddle: null
+          collisionCooldown: 0
         };
 
         pongGameState.ctx = pongGameState.canvas.getContext('2d');
@@ -3415,6 +3415,7 @@
           pongGameState.running = true;
           pongGameState.gameRunning = true;
           pongGameState.playerDir = 0;
+          pongGameState.collisionCooldown = 0;
           pongGameState.playerPaddle = {x: 10, y: 175, width: 10, height: 50, speed: 5};
           pongGameState.aiPaddle = {x: 380, y: 175, width: 10, height: 50, speed: 4};
           const randomVx = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2);
@@ -3505,8 +3506,13 @@
             pongGameState.ball.vy = -pongGameState.ball.vy;
           }
 
+          // Decrease collision cooldown
+          if (pongGameState.collisionCooldown > 0) {
+            pongGameState.collisionCooldown--;
+          }
+
           // Continuous collision detection for player paddle
-          if (pongGameState.ball.vx < 0 && pongGameState.lastHitPaddle !== 'player') {
+          if (pongGameState.ball.vx < 0 && pongGameState.collisionCooldown <= 0) {
             // Check if ball crossed paddle line during this frame
             if (prevBallX + pongGameState.ball.radius > pongGameState.playerPaddle.x + pongGameState.playerPaddle.width &&
                 pongGameState.ball.x + pongGameState.ball.radius <= pongGameState.playerPaddle.x + pongGameState.playerPaddle.width) {
@@ -3517,13 +3523,13 @@
                 pongGameState.ball.x = pongGameState.playerPaddle.x + pongGameState.playerPaddle.width + pongGameState.ball.radius + 1;
                 pongGameState.ball.vx = Math.abs(pongGameState.ball.vx) * 1.05;
                 pongGameState.ball.vy += (impactPos - 0.5) * 2;
-                pongGameState.lastHitPaddle = 'player';
+                pongGameState.collisionCooldown = 5;
               }
             }
           }
 
           // Continuous collision detection for AI paddle
-          if (pongGameState.ball.vx > 0 && pongGameState.lastHitPaddle !== 'ai') {
+          if (pongGameState.ball.vx > 0 && pongGameState.collisionCooldown <= 0) {
             // Check if ball crossed paddle line during this frame
             if (prevBallX - pongGameState.ball.radius < pongGameState.aiPaddle.x &&
                 pongGameState.ball.x - pongGameState.ball.radius >= pongGameState.aiPaddle.x) {
@@ -3534,7 +3540,7 @@
                 pongGameState.ball.x = pongGameState.aiPaddle.x - pongGameState.ball.radius - 1;
                 pongGameState.ball.vx = -Math.abs(pongGameState.ball.vx) * 1.05;
                 pongGameState.ball.vy += (impactPos - 0.5) * 2;
-                pongGameState.lastHitPaddle = 'ai';
+                pongGameState.collisionCooldown = 5;
               }
             }
           }
@@ -3546,7 +3552,7 @@
             const randomVx = -(3 + Math.random() * 2);
             const randomVy = (Math.random() - 0.5) * 3;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
-            pongGameState.lastHitPaddle = null;
+            pongGameState.collisionCooldown = 0;
           } else if (pongGameState.ball.x > pongGameState.canvas.width + pongGameState.ball.radius) {
             pongGameState.score++;
             document.getElementById('pongScore').textContent = pongGameState.score;
@@ -3554,14 +3560,7 @@
             const randomVx = 3 + Math.random() * 2;
             const randomVy = (Math.random() - 0.5) * 3;
             pongGameState.ball = {x: 200, y: 200, radius: 5, vx: randomVx, vy: randomVy};
-            pongGameState.lastHitPaddle = null;
-          }
-
-          // Clear lastHitPaddle flag only when ball is moving away from the paddle it last hit
-          if (pongGameState.lastHitPaddle === 'player' && pongGameState.ball.vx > 0) {
-            pongGameState.lastHitPaddle = null;
-          } else if (pongGameState.lastHitPaddle === 'ai' && pongGameState.ball.vx < 0) {
-            pongGameState.lastHitPaddle = null;
+            pongGameState.collisionCooldown = 0;
           }
 
           if (pongGameState.aiScore >= 5) {
