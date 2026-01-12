@@ -1161,6 +1161,9 @@
             <button class="btn-game-select" onclick="selectGame('dodge')">
               🚗 Dodge
             </button>
+            <button class="btn-game-select" onclick="selectGame('spaceinvaders')">
+              👽 Space Invaders
+            </button>
           </div>
           <button class="btn-close-game" onclick="closeGameModal()" style="margin-top: 1rem; width: 100%;">Lukk</button>
         </div>
@@ -1565,6 +1568,248 @@
           <div class="game-buttons">
             <button class="btn-play" onclick="startDodgeGame()">Play</button>
             <button class="btn-close-game" onclick="backToGameMenu()">Tilbake</button>
+          </div>
+        </div>
+
+        <!-- Space Invaders Game -->
+        <div id="spaceInvadersGame" style="display: none;">
+          <style>
+            .space-invaders-container {
+              background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%);
+              border-radius: 12px;
+              padding: 2rem;
+              max-width: 500px;
+              margin: 0 auto;
+              box-shadow: 0 8px 32px rgba(255, 100, 200, 0.2);
+            }
+            
+            .space-invaders-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 1.5rem;
+              flex-wrap: wrap;
+              gap: 1rem;
+            }
+            
+            .space-invaders-header h2 {
+              margin: 0;
+              font-size: 2rem;
+              background: linear-gradient(135deg, #FF00FF, #00FFFF);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+            }
+            
+            .space-invaders-stats {
+              display: flex;
+              gap: 1.5rem;
+              margin-bottom: 1.5rem;
+              justify-content: space-around;
+              flex-wrap: wrap;
+            }
+            
+            .space-invaders-stat-box {
+              background: rgba(255, 100, 200, 0.15);
+              padding: 1rem;
+              border-radius: 8px;
+              border-left: 3px solid #FF00FF;
+              text-align: center;
+              min-width: 120px;
+            }
+            
+            .space-invaders-stat-box .label {
+              font-size: 0.85rem;
+              color: #aaa;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            
+            .space-invaders-stat-box .value {
+              font-size: 1.8rem;
+              font-weight: bold;
+              color: #00FFFF;
+              margin-top: 0.5rem;
+            }
+            
+            .wave-indicator {
+              text-align: center;
+              margin: 1rem 0;
+              font-size: 0.9rem;
+              color: #aaa;
+            }
+            
+            .wave-bar {
+              width: 100%;
+              height: 6px;
+              background: #333;
+              border-radius: 3px;
+              margin-top: 0.5rem;
+              overflow: hidden;
+            }
+            
+            .wave-fill {
+              height: 100%;
+              background: linear-gradient(90deg, #00FF00, #FFD700, #FF6B6B);
+              width: 20%;
+              transition: width 0.3s ease;
+            }
+            
+            .space-invaders-canvas-wrapper {
+              position: relative;
+              text-align: center;
+              margin-bottom: 1.5rem;
+            }
+            
+            #spaceInvadersCanvas {
+              display: block;
+              margin: 0 auto;
+              border: 2px solid #FF00FF;
+              border-radius: 8px;
+              cursor: crosshair;
+              touch-action: none;
+              background: #0a0a1a;
+              box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+              max-width: 100%;
+              height: auto;
+            }
+            
+            .space-invaders-controls {
+              text-align: center;
+              margin-bottom: 1rem;
+            }
+            
+            .space-invaders-play-btn {
+              background: linear-gradient(135deg, #FF00FF, #FF1493);
+              color: #0a0a1a;
+              border: none;
+              padding: 1rem 2.5rem;
+              font-size: 1.1rem;
+              font-weight: bold;
+              border-radius: 8px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3);
+            }
+            
+            .space-invaders-play-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(255, 0, 255, 0.5);
+            }
+            
+            .space-invaders-instructions {
+              background: rgba(255, 0, 255, 0.1);
+              padding: 1rem;
+              border-radius: 8px;
+              font-size: 0.9rem;
+              color: #bbb;
+              text-align: center;
+              margin-bottom: 1rem;
+            }
+            
+            .space-invaders-gameover-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.9);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 10000;
+              backdrop-filter: blur(4px);
+              pointer-events: none;
+            }
+            
+            .space-invaders-gameover-box {
+              background: linear-gradient(135deg, #0a0a1a, #1a0a2e);
+              padding: 2rem;
+              border-radius: 12px;
+              text-align: center;
+              border: 2px solid #FF00FF;
+              box-shadow: 0 8px 32px rgba(255, 0, 255, 0.3);
+            }
+            
+            .space-invaders-gameover-box h3 {
+              font-size: 2rem;
+              color: #FF1493;
+              margin-bottom: 1rem;
+            }
+            
+            .space-invaders-gameover-stat {
+              font-size: 1.1rem;
+              margin: 0.5rem 0;
+              color: #bbb;
+            }
+            
+            .space-invaders-gameover-stat .stat-value {
+              color: #00FFFF;
+              font-weight: bold;
+            }
+          </style>
+          
+          <div class="space-invaders-container">
+            <div class="space-invaders-header">
+              <h2>👽 Space Invaders</h2>
+            </div>
+            
+            <div class="space-invaders-stats">
+              <div class="space-invaders-stat-box">
+                <div class="label">Score</div>
+                <div class="value" id="spaceScore">0</div>
+              </div>
+              <div class="space-invaders-stat-box">
+                <div class="label">Highscore</div>
+                <div class="value" id="spaceHighscore">0</div>
+              </div>
+              <div class="space-invaders-stat-box">
+                <div class="label">Lives</div>
+                <div class="value" id="spaceLives">3</div>
+              </div>
+            </div>
+            
+            <div class="wave-indicator">
+              Wave: <span id="spaceWave">1</span>
+              <div class="wave-bar">
+                <div class="wave-fill" id="spacingWaveFill"></div>
+              </div>
+            </div>
+            
+            <div class="space-invaders-instructions">
+              <div>Arrow Keys or A/D to move, SPACE to shoot</div>
+              <div style="margin-top: 0.3rem; font-size: 0.8rem;">Destroy all aliens before they reach you!</div>
+            </div>
+            
+            <div class="space-invaders-canvas-wrapper">
+              <canvas id="spaceInvadersCanvas" width="400" height="500"></canvas>
+            </div>
+            
+            <div class="space-invaders-controls">
+              <button class="space-invaders-play-btn" onclick="startSpaceInvadersGame()" id="spacePlayBtn">▶️ Play</button>
+            </div>
+            
+            <div style="text-align: center;">
+              <button class="btn-close-game" onclick="backToGameMenu()" style="margin-top: 1rem;">⬅️ Tilbake</button>
+            </div>
+          </div>
+          
+          <!-- Game Over Overlay -->
+          <div class="space-invaders-gameover-overlay" id="spaceGameOverOverlay" style="display: none;">
+            <div class="space-invaders-gameover-box">
+              <h3>Game Over!</h3>
+              <div style="margin: 1.5rem 0;">
+                <div class="space-invaders-gameover-stat">Final Score: <span class="stat-value" id="spaceFinalScore">0</span></div>
+                <div class="space-invaders-gameover-stat">Wave Reached: <span class="stat-value" id="spaceFinalWave">1</span></div>
+              </div>
+              <div id="spaceNewHighscoreMsg" style="color: #FFD700; font-weight: bold; margin: 1rem 0; font-size: 1.2rem; display: none;">
+                🏆 NEW HIGHSCORE! 🏆
+              </div>
+              <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+                <button class="btn-retry" onclick="startSpaceInvadersGame()">🔄 Try Again</button>
+                <button class="btn-back" onclick="backToGameMenu()">⬅️ Back</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -3060,30 +3305,42 @@
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
+            document.getElementById('spaceInvadersGame').style.display = 'none';
           } else if (game === 'snake') {
             document.getElementById('snakeGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
+            document.getElementById('spaceInvadersGame').style.display = 'none';
           } else if (game === 'bouncingball') {
             document.getElementById('bouncingBallGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
+            document.getElementById('spaceInvadersGame').style.display = 'none';
           } else if (game === 'pong') {
             document.getElementById('pongGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('dodgeGame').style.display = 'none';
+            document.getElementById('spaceInvadersGame').style.display = 'none';
           } else if (game === 'dodge') {
             document.getElementById('dodgeGame').style.display = 'block';
             document.getElementById('flappybirdGame').style.display = 'none';
             document.getElementById('snakeGame').style.display = 'none';
             document.getElementById('bouncingBallGame').style.display = 'none';
             document.getElementById('pongGame').style.display = 'none';
+            document.getElementById('spaceInvadersGame').style.display = 'none';
+          } else if (game === 'spaceinvaders') {
+            document.getElementById('spaceInvadersGame').style.display = 'block';
+            document.getElementById('flappybirdGame').style.display = 'none';
+            document.getElementById('snakeGame').style.display = 'none';
+            document.getElementById('bouncingBallGame').style.display = 'none';
+            document.getElementById('pongGame').style.display = 'none';
+            document.getElementById('dodgeGame').style.display = 'none';
           }
         }
 
@@ -3094,11 +3351,13 @@
           document.getElementById('bouncingBallGame').style.display = 'none';
           document.getElementById('pongGame').style.display = 'none';
           document.getElementById('dodgeGame').style.display = 'none';
+          document.getElementById('spaceInvadersGame').style.display = 'none';
           gameState.gameRunning = false;
           snakeGameState.running = false;
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
+          spaceInvadersState.running = false;
         }
 
         function closeGameModal() {
@@ -3108,6 +3367,7 @@
           ballGameState.running = false;
           pongGameState.running = false;
           dodgeGameState.running = false;
+          spaceInvadersState.running = false;
         }
 
         function drawBird() {
@@ -3564,6 +3824,325 @@
             const highscoreMessage = `🏆 ${currentUser.name} got a new Dodge highscore: ${dodgeGameState.score}!`;
             socket.emit('chat message', { 
               msg: highscoreMessage, 
+              room,
+              sender: 'Game',
+              color: '#FFD700',
+              isSystemMessage: true,
+              noNotification: true
+            });
+          }
+        }
+
+        // ============ SPACE INVADERS GAME ============
+        let spaceInvadersState = {
+          canvas: document.getElementById('spaceInvadersCanvas'),
+          ctx: null,
+          player: { x: 175, y: 450, width: 30, height: 30 },
+          enemies: [],
+          playerBullets: [],
+          enemyBullets: [],
+          score: 0,
+          highscore: localStorage.getItem('spaceHighscore') || 0,
+          lives: 3,
+          wave: 1,
+          running: false,
+          gameRunning: false,
+          gameSpeed: 6,
+          frameCount: 0,
+          enemyShootCounter: 0
+        };
+
+        spaceInvadersState.ctx = spaceInvadersState.canvas.getContext('2d');
+
+        function startSpaceInvadersGame() {
+          // Clone canvas to remove old listeners
+          const oldCanvas = spaceInvadersState.canvas;
+          const newCanvas = oldCanvas.cloneNode(true);
+          oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+          spaceInvadersState.canvas = newCanvas;
+          spaceInvadersState.ctx = spaceInvadersState.canvas.getContext('2d');
+
+          spaceInvadersState.player = { x: 175, y: 450, width: 30, height: 30 };
+          spaceInvadersState.enemies = [];
+          spaceInvadersState.playerBullets = [];
+          spaceInvadersState.enemyBullets = [];
+          spaceInvadersState.score = 0;
+          spaceInvadersState.lives = 3;
+          spaceInvadersState.wave = 1;
+          spaceInvadersState.running = true;
+          spaceInvadersState.gameRunning = true;
+          spaceInvadersState.frameCount = 0;
+          spaceInvadersState.enemyShootCounter = 0;
+
+          document.getElementById('spaceScore').textContent = '0';
+          document.getElementById('spaceLives').textContent = '3';
+          document.getElementById('spaceWave').textContent = '1';
+          document.getElementById('spacingWaveFill').style.width = '20%';
+          document.getElementById('spaceGameOverOverlay').style.display = 'none';
+          document.getElementById('spaceGameOverOverlay').style.pointerEvents = 'none';
+          document.getElementById('spacePlayBtn').style.display = 'none';
+
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+
+          document.addEventListener('keydown', handleSpaceInvadersKeydown);
+          document.addEventListener('keyup', handleSpaceInvadersKeyup);
+          spaceInvadersState.canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+          spawnWave();
+          spaceInvadersGameLoop();
+        }
+
+        let spaceInvadersKeys = {};
+
+        function handleSpaceInvadersKeydown(e) {
+          spaceInvadersKeys[e.key.toLowerCase()] = true;
+          if (e.key === ' ') {
+            e.preventDefault();
+            shootPlayerBullet();
+          }
+        }
+
+        function handleSpaceInvadersKeyup(e) {
+          spaceInvadersKeys[e.key.toLowerCase()] = false;
+        }
+
+        function spawnWave() {
+          spaceInvadersState.enemies = [];
+          const enemyCount = 3 + spaceInvadersState.wave;
+          for (let i = 0; i < enemyCount; i++) {
+            spaceInvadersState.enemies.push({
+              x: 40 + i * 100,
+              y: 30,
+              width: 30,
+              height: 30,
+              vx: 2 + spaceInvadersState.wave * 0.5,
+              vy: 0,
+              direction: 1
+            });
+          }
+        }
+
+        function shootPlayerBullet() {
+          if (!spaceInvadersState.running) return;
+          spaceInvadersState.playerBullets.push({
+            x: spaceInvadersState.player.x + 15,
+            y: spaceInvadersState.player.y,
+            width: 4,
+            height: 12,
+            vy: -8
+          });
+        }
+
+        function spaceInvadersGameLoop() {
+          if (!spaceInvadersState.running) return;
+
+          spaceInvadersState.frameCount++;
+
+          // Move player
+          if (spaceInvadersKeys['arrowleft'] || spaceInvadersKeys['a']) {
+            spaceInvadersState.player.x = Math.max(0, spaceInvadersState.player.x - 6);
+          }
+          if (spaceInvadersKeys['arrowright'] || spaceInvadersKeys['d']) {
+            spaceInvadersState.player.x = Math.min(400 - spaceInvadersState.player.width, spaceInvadersState.player.x + 6);
+          }
+
+          // Move and update player bullets
+          for (let i = spaceInvadersState.playerBullets.length - 1; i >= 0; i--) {
+            const bullet = spaceInvadersState.playerBullets[i];
+            bullet.y += bullet.vy;
+            if (bullet.y < 0) {
+              spaceInvadersState.playerBullets.splice(i, 1);
+            }
+          }
+
+          // Move enemies and check for shooting
+          let minX = 400, maxX = 0;
+          for (let enemy of spaceInvadersState.enemies) {
+            enemy.x += enemy.vx * enemy.direction;
+            minX = Math.min(minX, enemy.x);
+            maxX = Math.max(maxX, enemy.x + enemy.width);
+          }
+
+          // Reverse direction if at edges
+          if (minX < 0 || maxX > 400) {
+            for (let enemy of spaceInvadersState.enemies) {
+              enemy.direction *= -1;
+              enemy.y += 30;
+            }
+          }
+
+          // Enemies shoot randomly
+          spaceInvadersState.enemyShootCounter++;
+          if (spaceInvadersState.enemyShootCounter > 40 && spaceInvadersState.enemies.length > 0) {
+            const randomEnemy = spaceInvadersState.enemies[Math.floor(Math.random() * spaceInvadersState.enemies.length)];
+            spaceInvadersState.enemyBullets.push({
+              x: randomEnemy.x + 15,
+              y: randomEnemy.y + 30,
+              width: 4,
+              height: 12,
+              vy: 5
+            });
+            spaceInvadersState.enemyShootCounter = 0;
+          }
+
+          // Move enemy bullets
+          for (let i = spaceInvadersState.enemyBullets.length - 1; i >= 0; i--) {
+            const bullet = spaceInvadersState.enemyBullets[i];
+            bullet.y += bullet.vy;
+            if (bullet.y > 500) {
+              spaceInvadersState.enemyBullets.splice(i, 1);
+            }
+          }
+
+          // Collision: player bullets with enemies
+          for (let i = spaceInvadersState.playerBullets.length - 1; i >= 0; i--) {
+            const bullet = spaceInvadersState.playerBullets[i];
+            for (let j = spaceInvadersState.enemies.length - 1; j >= 0; j--) {
+              const enemy = spaceInvadersState.enemies[j];
+              if (bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x &&
+                  bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
+                spaceInvadersState.score += 10;
+                document.getElementById('spaceScore').textContent = spaceInvadersState.score;
+                spaceInvadersState.enemies.splice(j, 1);
+                spaceInvadersState.playerBullets.splice(i, 1);
+                break;
+              }
+            }
+          }
+
+          // Collision: enemy bullets with player
+          for (let i = spaceInvadersState.enemyBullets.length - 1; i >= 0; i--) {
+            const bullet = spaceInvadersState.enemyBullets[i];
+            if (bullet.x < spaceInvadersState.player.x + spaceInvadersState.player.width &&
+                bullet.x + bullet.width > spaceInvadersState.player.x &&
+                bullet.y < spaceInvadersState.player.y + spaceInvadersState.player.height &&
+                bullet.y + bullet.height > spaceInvadersState.player.y) {
+              spaceInvadersState.lives--;
+              document.getElementById('spaceLives').textContent = spaceInvadersState.lives;
+              spaceInvadersState.enemyBullets.splice(i, 1);
+              if (spaceInvadersState.lives <= 0) {
+                endSpaceInvadersGame();
+                return;
+              }
+            }
+          }
+
+          // Check if enemies reached bottom
+          for (let enemy of spaceInvadersState.enemies) {
+            if (enemy.y > 470) {
+              endSpaceInvadersGame();
+              return;
+            }
+          }
+
+          // Wave completed
+          if (spaceInvadersState.enemies.length === 0) {
+            spaceInvadersState.wave++;
+            document.getElementById('spaceWave').textContent = spaceInvadersState.wave;
+            document.getElementById('spacingWaveFill').style.width = (spaceInvadersState.wave / 10 * 100) + '%';
+            spawnWave();
+          }
+
+          drawSpaceInvaders();
+          requestAnimationFrame(spaceInvadersGameLoop);
+        }
+
+        function drawSpaceInvaders() {
+          // Background
+          const gradient = spaceInvadersState.ctx.createLinearGradient(0, 0, 0, 500);
+          gradient.addColorStop(0, '#0a0a1a');
+          gradient.addColorStop(1, '#1a0a2e');
+          spaceInvadersState.ctx.fillStyle = gradient;
+          spaceInvadersState.ctx.fillRect(0, 0, 400, 500);
+
+          // Grid
+          spaceInvadersState.ctx.strokeStyle = 'rgba(255, 0, 255, 0.05)';
+          spaceInvadersState.ctx.lineWidth = 0.5;
+          for (let i = 0; i <= 400; i += 50) {
+            spaceInvadersState.ctx.beginPath();
+            spaceInvadersState.ctx.moveTo(i, 0);
+            spaceInvadersState.ctx.lineTo(i, 500);
+            spaceInvadersState.ctx.stroke();
+          }
+          for (let i = 0; i <= 500; i += 50) {
+            spaceInvadersState.ctx.beginPath();
+            spaceInvadersState.ctx.moveTo(0, i);
+            spaceInvadersState.ctx.lineTo(400, i);
+            spaceInvadersState.ctx.stroke();
+          }
+
+          // Draw player ship
+          spaceInvadersState.ctx.fillStyle = '#00FF00';
+          spaceInvadersState.ctx.shadowColor = '#00FF00';
+          spaceInvadersState.ctx.shadowBlur = 10;
+          spaceInvadersState.ctx.beginPath();
+          spaceInvadersState.ctx.moveTo(spaceInvadersState.player.x + 15, spaceInvadersState.player.y);
+          spaceInvadersState.ctx.lineTo(spaceInvadersState.player.x, spaceInvadersState.player.y + 30);
+          spaceInvadersState.ctx.lineTo(spaceInvadersState.player.x + 10, spaceInvadersState.player.y + 20);
+          spaceInvadersState.ctx.lineTo(spaceInvadersState.player.x + 20, spaceInvadersState.player.y + 20);
+          spaceInvadersState.ctx.lineTo(spaceInvadersState.player.x + 30, spaceInvadersState.player.y + 30);
+          spaceInvadersState.ctx.closePath();
+          spaceInvadersState.ctx.fill();
+          spaceInvadersState.ctx.shadowBlur = 0;
+
+          // Draw enemies
+          for (let enemy of spaceInvadersState.enemies) {
+            spaceInvadersState.ctx.fillStyle = '#FF00FF';
+            spaceInvadersState.ctx.shadowColor = '#FF00FF';
+            spaceInvadersState.ctx.shadowBlur = 8;
+            spaceInvadersState.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            
+            // Eyes
+            spaceInvadersState.ctx.fillStyle = '#00FFFF';
+            spaceInvadersState.ctx.fillRect(enemy.x + 6, enemy.y + 8, 6, 6);
+            spaceInvadersState.ctx.fillRect(enemy.x + 18, enemy.y + 8, 6, 6);
+            spaceInvadersState.ctx.shadowBlur = 0;
+          }
+
+          // Draw player bullets
+          spaceInvadersState.ctx.fillStyle = '#00FF00';
+          for (let bullet of spaceInvadersState.playerBullets) {
+            spaceInvadersState.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+          }
+
+          // Draw enemy bullets
+          spaceInvadersState.ctx.fillStyle = '#FF6B6B';
+          for (let bullet of spaceInvadersState.enemyBullets) {
+            spaceInvadersState.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+          }
+        }
+
+        function endSpaceInvadersGame() {
+          spaceInvadersState.running = false;
+          document.removeEventListener('keydown', handleSpaceInvadersKeydown);
+          document.removeEventListener('keyup', handleSpaceInvadersKeyup);
+
+          const overlay = document.getElementById('spaceGameOverOverlay');
+          overlay.style.pointerEvents = 'auto';
+          overlay.style.display = 'flex';
+          document.getElementById('spaceFinalScore').textContent = spaceInvadersState.score;
+          document.getElementById('spaceFinalWave').textContent = spaceInvadersState.wave;
+
+          const newHighscoreMsg = document.getElementById('spaceNewHighscoreMsg');
+          const isNewHighscore = spaceInvadersState.score > spaceInvadersState.highscore;
+          newHighscoreMsg.style.display = isNewHighscore ? 'block' : 'none';
+
+          document.body.style.overflow = 'auto';
+          document.documentElement.style.overflow = 'auto';
+
+          setTimeout(() => {
+            document.getElementById('spacePlayBtn').style.display = 'block';
+          }, 200);
+
+          if (isNewHighscore) {
+            spaceInvadersState.highscore = spaceInvadersState.score;
+            localStorage.setItem('spaceHighscore', spaceInvadersState.highscore);
+            document.getElementById('spaceHighscore').textContent = spaceInvadersState.highscore;
+
+            const highscoreMessage = `🏆 ${currentUser.name} got a new Space Invaders highscore: ${spaceInvadersState.score}!`;
+            socket.emit('chat message', {
+              msg: highscoreMessage,
               room,
               sender: 'Game',
               color: '#FFD700',
