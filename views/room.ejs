@@ -1191,18 +1191,294 @@
 
         <!-- Snake Game -->
         <div id="snakeGame" style="display: none;">
-          <h2>🐍 Snake</h2>
-          <div style="display: flex; justify-content: space-around; margin: 1rem 0; font-weight: bold;">
-            <div>Score: <span id="snakeScore">0</span></div>
-            <div>Highscore: <span id="snakeHighscore">0</span></div>
+          <style>
+            .snake-container {
+              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+              border-radius: 12px;
+              padding: 2rem;
+              max-width: 500px;
+              margin: 0 auto;
+              box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+            }
+            
+            .snake-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 1.5rem;
+              flex-wrap: wrap;
+              gap: 1rem;
+            }
+            
+            .snake-header h2 {
+              margin: 0;
+              font-size: 2rem;
+              background: linear-gradient(135deg, #00FF00, #00CC88);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+            }
+            
+            .snake-stats {
+              display: flex;
+              gap: 1.5rem;
+              margin-bottom: 1.5rem;
+              justify-content: space-around;
+              flex-wrap: wrap;
+            }
+            
+            .snake-stat-box {
+              background: rgba(102, 126, 234, 0.15);
+              padding: 1rem;
+              border-radius: 8px;
+              border-left: 3px solid #667eea;
+              text-align: center;
+              min-width: 120px;
+            }
+            
+            .snake-stat-box .label {
+              font-size: 0.85rem;
+              color: #aaa;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            
+            .snake-stat-box .value {
+              font-size: 1.8rem;
+              font-weight: bold;
+              color: #00FF00;
+              margin-top: 0.5rem;
+            }
+            
+            .snake-difficulty {
+              text-align: center;
+              margin: 1rem 0;
+              font-size: 0.9rem;
+              color: #aaa;
+            }
+            
+            .difficulty-bar {
+              width: 100%;
+              height: 6px;
+              background: #333;
+              border-radius: 3px;
+              margin-top: 0.5rem;
+              overflow: hidden;
+            }
+            
+            .difficulty-fill {
+              height: 100%;
+              background: linear-gradient(90deg, #00FF00, #FFD700, #FF6B6B);
+              width: 25%;
+              transition: width 0.3s ease;
+            }
+            
+            .snake-canvas-wrapper {
+              position: relative;
+              text-align: center;
+              margin-bottom: 1.5rem;
+            }
+            
+            #snakeCanvas {
+              display: block;
+              margin: 0 auto;
+              border: 2px solid #667eea;
+              border-radius: 8px;
+              cursor: crosshair;
+              touch-action: none;
+              background: #1a1a2e;
+              box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+              max-width: 100%;
+              height: auto;
+            }
+            
+            .snake-controls {
+              text-align: center;
+              margin-bottom: 1rem;
+            }
+            
+            .snake-play-btn {
+              background: linear-gradient(135deg, #00FF00, #00CC88);
+              color: #1a1a2e;
+              border: none;
+              padding: 1rem 2.5rem;
+              font-size: 1.1rem;
+              font-weight: bold;
+              border-radius: 8px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3);
+            }
+            
+            .snake-play-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(0, 255, 0, 0.5);
+            }
+            
+            .snake-play-btn:active {
+              transform: translateY(0);
+            }
+            
+            .snake-instructions {
+              background: rgba(102, 126, 234, 0.1);
+              padding: 1rem;
+              border-radius: 8px;
+              font-size: 0.9rem;
+              color: #bbb;
+              text-align: center;
+              margin-bottom: 1rem;
+            }
+            
+            .snake-controls-hint {
+              color: #00FF00;
+              font-weight: bold;
+              margin-top: 0.5rem;
+            }
+            
+            .snake-gameover-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.8);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 10000;
+              backdrop-filter: blur(4px);
+            }
+            
+            .snake-gameover-box {
+              background: linear-gradient(135deg, #1a1a2e, #16213e);
+              padding: 2rem;
+              border-radius: 12px;
+              text-align: center;
+              border: 2px solid #667eea;
+              box-shadow: 0 8px 32px rgba(0, 255, 0, 0.2);
+            }
+            
+            .snake-gameover-box h3 {
+              font-size: 2rem;
+              color: #FF6B6B;
+              margin-bottom: 1rem;
+            }
+            
+            .snake-gameover-stats {
+              margin: 1.5rem 0;
+            }
+            
+            .snake-gameover-stat {
+              font-size: 1.1rem;
+              margin: 0.5rem 0;
+              color: #bbb;
+            }
+            
+            .snake-gameover-stat .stat-value {
+              color: #00FF00;
+              font-weight: bold;
+            }
+            
+            .snake-gameover-buttons {
+              display: flex;
+              gap: 1rem;
+              justify-content: center;
+              margin-top: 1.5rem;
+              flex-wrap: wrap;
+            }
+            
+            .btn-retry {
+              background: linear-gradient(135deg, #00FF00, #00CC88);
+              color: #1a1a2e;
+              border: none;
+              padding: 0.75rem 1.5rem;
+              font-weight: bold;
+              border-radius: 6px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            }
+            
+            .btn-retry:hover {
+              transform: scale(1.05);
+            }
+            
+            .btn-back {
+              background: #667eea;
+              color: white;
+              border: none;
+              padding: 0.75rem 1.5rem;
+              font-weight: bold;
+              border-radius: 6px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            }
+            
+            .btn-back:hover {
+              transform: scale(1.05);
+            }
+          </style>
+          
+          <div class="snake-container">
+            <div class="snake-header">
+              <h2>🐍 Snake</h2>
+            </div>
+            
+            <div class="snake-stats">
+              <div class="snake-stat-box">
+                <div class="label">Score</div>
+                <div class="value" id="snakeScore">0</div>
+              </div>
+              <div class="snake-stat-box">
+                <div class="label">Highscore</div>
+                <div class="value" id="snakeHighscore">0</div>
+              </div>
+              <div class="snake-stat-box">
+                <div class="label">Length</div>
+                <div class="value" id="snakeLength">1</div>
+              </div>
+            </div>
+            
+            <div class="snake-difficulty">
+              Difficulty: <span id="snakeDifficultyText">Easy</span>
+              <div class="difficulty-bar">
+                <div class="difficulty-fill" id="difficultyFill"></div>
+              </div>
+            </div>
+            
+            <div class="snake-instructions">
+              <div>Swipe or use <span class="snake-controls-hint">Arrow Keys / WASD</span></div>
+              <div style="margin-top: 0.3rem; font-size: 0.8rem;">Eat the red circles to grow!</div>
+            </div>
+            
+            <div class="snake-canvas-wrapper">
+              <canvas id="snakeCanvas" width="400" height="400"></canvas>
+            </div>
+            
+            <div class="snake-controls">
+              <button class="snake-play-btn" onclick="startSnakeGame()" id="snakePlayBtn">▶️ Play</button>
+            </div>
+            
+            <div style="text-align: center;">
+              <button class="btn-close-game" onclick="backToGameMenu()" style="margin-top: 1rem;">⬅️ Tilbake</button>
+            </div>
           </div>
-          <div style="text-align: center; margin-bottom: 1rem;">
-            <button class="btn-play" onclick="startSnakeGame()" id="snakePlayBtn">▶️ Play</button>
-          </div>
-          <canvas id="snakeCanvas" width="400" height="400" style="display: block; margin: 0 auto; border: 3px solid #667eea; border-radius: 8px; cursor: crosshair; touch-action: none;"></canvas>
-          <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.9rem;">
-            <p>Swipe or use Arrow Keys/WASD to move</p>
-            <button class="btn-close-game" onclick="backToGameMenu()" style="margin-top: 1rem;">⬅️ Tilbake</button>
+          
+          <!-- Game Over Overlay -->
+          <div class="snake-gameover-overlay" id="snakeGameOverOverlay" style="display: none;">
+            <div class="snake-gameover-box">
+              <h3>Game Over!</h3>
+              <div class="snake-gameover-stats">
+                <div class="snake-gameover-stat">Final Score: <span class="stat-value" id="finalScore">0</span></div>
+                <div class="snake-gameover-stat">Snake Length: <span class="stat-value" id="finalLength">1</span></div>
+              </div>
+              <div id="newHighscoreMsg" style="color: #FFD700; font-weight: bold; margin: 1rem 0; font-size: 1.2rem; display: none;">
+                🏆 NEW HIGHSCORE! 🏆
+              </div>
+              <div class="snake-gameover-buttons">
+                <button class="btn-retry" onclick="startSnakeGame()">🔄 Try Again</button>
+                <button class="btn-back" onclick="backToGameMenu()">⬅️ Back</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2443,6 +2719,8 @@
           snakeGameState.running = true;
           snakeGameState.gameRunning = true;
           document.getElementById('snakeScore').textContent = '0';
+          document.getElementById('snakeLength').textContent = '1';
+          document.getElementById('snakeGameOverOverlay').style.display = 'none';
           
           // Hide play button
           document.getElementById('snakePlayBtn').style.display = 'none';
@@ -2587,8 +2865,12 @@
             snakeGameState.score += 10;
             document.getElementById('snakeScore').textContent = snakeGameState.score;
             
+            // Update length display
+            document.getElementById('snakeLength').textContent = snakeGameState.snake.length + 1;
+            
             // Increase difficulty as snake grows
             snakeGameState.gameSpeed = Math.max(3, 8 - Math.floor(snakeGameState.snake.length / 5));
+            updateDifficultyDisplay();
             
             snakeGameState.food = {
               x: Math.floor(Math.random() * (snakeGameState.canvas.width / snakeGameState.gridSize)) * snakeGameState.gridSize,
@@ -2600,6 +2882,17 @@
 
           drawSnakeGame();
           requestAnimationFrame(snakeGameLoop);
+        }
+
+        function updateDifficultyDisplay() {
+          // Calculate difficulty (1-5) based on snake length
+          const difficulty = Math.min(5, Math.ceil(snakeGameState.snake.length / 3));
+          const difficultyTexts = ['Easy', 'Normal', 'Hard', 'Very Hard', 'Extreme', 'Insane'];
+          const difficultyText = difficultyTexts[difficulty - 1] || 'Insane';
+          const difficultyPercent = (difficulty / 5) * 100;
+          
+          document.getElementById('snakeDifficultyText').textContent = difficultyText;
+          document.getElementById('difficultyFill').style.width = difficultyPercent + '%';
         }
 
         function drawSnakeGame() {
@@ -2661,14 +2954,26 @@
           snakeGameState.running = false;
           document.removeEventListener('keydown', handleSnakeKeydown);
           
-          // Show play button again
-          document.getElementById('snakePlayBtn').style.display = 'block';
+          // Show game over overlay
+          const overlay = document.getElementById('snakeGameOverOverlay');
+          overlay.style.display = 'flex';
+          document.getElementById('finalScore').textContent = snakeGameState.score;
+          document.getElementById('finalLength').textContent = snakeGameState.snake.length;
+          
+          const newHighscoreMsg = document.getElementById('newHighscoreMsg');
+          const isNewHighscore = snakeGameState.score > snakeGameState.highscore;
+          newHighscoreMsg.style.display = isNewHighscore ? 'block' : 'none';
+          
+          // Show play button again (after a short delay so they see the overlay first)
+          setTimeout(() => {
+            document.getElementById('snakePlayBtn').style.display = 'block';
+          }, 100);
           
           // Restore scrolling
           document.body.style.overflow = 'auto';
           document.documentElement.style.overflow = 'auto';
 
-          if (snakeGameState.score > snakeGameState.highscore) {
+          if (isNewHighscore) {
             snakeGameState.highscore = snakeGameState.score;
             localStorage.setItem('snakeHighscore', snakeGameState.highscore);
             document.getElementById('snakeHighscore').textContent = snakeGameState.highscore;
