@@ -1196,6 +1196,9 @@
             <div>Score: <span id="snakeScore">0</span></div>
             <div>Highscore: <span id="snakeHighscore">0</span></div>
           </div>
+          <div style="text-align: center; margin-bottom: 1rem;">
+            <button class="btn-play" onclick="startSnakeGame()" id="snakePlayBtn">▶️ Play</button>
+          </div>
           <canvas id="snakeCanvas" width="400" height="400" style="display: block; margin: 0 auto; border: 3px solid #667eea; border-radius: 8px; cursor: crosshair; touch-action: none;"></canvas>
           <div style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.9rem;">
             <p>Swipe or use Arrow Keys/WASD to move</p>
@@ -2440,6 +2443,9 @@
           snakeGameState.gameRunning = true;
           document.getElementById('snakeScore').textContent = '0';
           
+          // Hide play button
+          document.getElementById('snakePlayBtn').style.display = 'none';
+          
           // Prevent scrolling during game
           document.body.style.overflow = 'hidden';
           document.documentElement.style.overflow = 'hidden';
@@ -2653,6 +2659,9 @@
         function endSnakeGame() {
           snakeGameState.running = false;
           document.removeEventListener('keydown', handleSnakeKeydown);
+          
+          // Show play button again
+          document.getElementById('snakePlayBtn').style.display = 'block';
           
           // Restore scrolling
           document.body.style.overflow = 'auto';
