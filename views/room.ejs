@@ -3849,7 +3849,9 @@
           gameRunning: false,
           gameSpeed: 6,
           frameCount: 0,
-          enemyShootCounter: 0
+          enemyShootCounter: 0,
+          moveLeft: false,
+          moveRight: false
         };
 
         spaceInvadersState.ctx = spaceInvadersState.canvas.getContext('2d');
@@ -3873,6 +3875,8 @@
           spaceInvadersState.gameRunning = true;
           spaceInvadersState.frameCount = 0;
           spaceInvadersState.enemyShootCounter = 0;
+          spaceInvadersState.moveLeft = false;
+          spaceInvadersState.moveRight = false;
 
           document.getElementById('spaceScore').textContent = '0';
           document.getElementById('spaceLives').textContent = '3';
@@ -3885,9 +3889,68 @@
           document.body.style.overflow = 'hidden';
           document.documentElement.style.overflow = 'hidden';
 
-          document.addEventListener('keydown', handleSpaceInvadersKeydown);
-          document.addEventListener('keyup', handleSpaceInvadersKeyup);
-          spaceInvadersState.canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+          // Remove old listeners first
+          document.removeEventListener('keydown', handleSpaceInvadersKeydown);
+          document.removeEventListener('keyup', handleSpaceInvadersKeyup);
+
+          // Add new listeners
+          const keydownHandler = (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'arrowleft' || key === 'a') {
+              spaceInvadersState.moveLeft = true;
+              e.preventDefault();
+            }
+            if (key === 'arrowright' || key === 'd') {
+              spaceInvadersState.moveRight = true;
+              e.preventDefault();
+            }
+            if (e.key === ' ') {
+              e.preventDefault();
+              shootPlayerBullet();
+            }
+          };
+
+          const keyupHandler = (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'arrowleft' || key === 'a') {
+              spaceInvadersState.moveLeft = false;
+              e.preventDefault();
+            }
+            if (key === 'arrowright' || key === 'd') {
+              spaceInvadersState.moveRight = false;
+              e.preventDefault();
+            }
+          };
+
+          document.addEventListener('keydown', keydownHandler);
+          document.addEventListener('keyup', keyupHandler);
+
+          // Touch controls
+          let touchStartX = 0;
+          spaceInvadersState.canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+          }, { passive: false });
+
+          spaceInvadersState.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touchX = e.touches[0].clientX;
+            const delta = touchX - touchStartX;
+            
+            if (delta < -20) {
+              spaceInvadersState.moveLeft = true;
+              spaceInvadersState.moveRight = false;
+            } else if (delta > 20) {
+              spaceInvadersState.moveRight = true;
+              spaceInvadersState.moveLeft = false;
+            }
+          }, { passive: false });
+
+          spaceInvadersState.canvas.addEventListener('touchend', (e) => {
+            spaceInvadersState.moveLeft = false;
+            spaceInvadersState.moveRight = false;
+          }, { passive: false });
+
+          spaceInvadersState.canvas.addEventListener('tap', shootPlayerBullet);
 
           spawnWave();
           spaceInvadersGameLoop();
@@ -3907,6 +3970,8 @@
           spaceInvadersKeys[e.key.toLowerCase()] = false;
         }
 
+        let lastShotTime = 0;
+
         function spawnWave() {
           spaceInvadersState.enemies = [];
           const enemyCount = 3 + spaceInvadersState.wave;
@@ -3925,6 +3990,10 @@
 
         function shootPlayerBullet() {
           if (!spaceInvadersState.running) return;
+          const now = Date.now();
+          // Allow shooting every 200ms (5 shots per second)
+          if (now - lastShotTime < 200) return;
+          lastShotTime = now;
           spaceInvadersState.playerBullets.push({
             x: spaceInvadersState.player.x + 15,
             y: spaceInvadersState.player.y,
@@ -3939,12 +4008,12 @@
 
           spaceInvadersState.frameCount++;
 
-          // Move player
-          if (spaceInvadersKeys['arrowleft'] || spaceInvadersKeys['a']) {
-            spaceInvadersState.player.x = Math.max(0, spaceInvadersState.player.x - 6);
+          // Move player using the new movement flags
+          if (spaceInvadersState.moveLeft) {
+            spaceInvadersState.player.x = Math.max(0, spaceInvadersState.player.x - 7);
           }
-          if (spaceInvadersKeys['arrowright'] || spaceInvadersKeys['d']) {
-            spaceInvadersState.player.x = Math.min(400 - spaceInvadersState.player.width, spaceInvadersState.player.x + 6);
+          if (spaceInvadersState.moveRight) {
+            spaceInvadersState.player.x = Math.min(400 - spaceInvadersState.player.width, spaceInvadersState.player.x + 7);
           }
 
           // Move and update player bullets
@@ -4049,15 +4118,17 @@
         }
 
         function drawSpaceInvaders() {
-          // Background
+          // Background with animated effect
           const gradient = spaceInvadersState.ctx.createLinearGradient(0, 0, 0, 500);
           gradient.addColorStop(0, '#0a0a1a');
-          gradient.addColorStop(1, '#1a0a2e');
+          gradient.addColorStop(0.5, '#1a0a2e');
+          gradient.addColorStop(1, '#0f0a20');
           spaceInvadersState.ctx.fillStyle = gradient;
           spaceInvadersState.ctx.fillRect(0, 0, 400, 500);
 
-          // Grid
-          spaceInvadersState.ctx.strokeStyle = 'rgba(255, 0, 255, 0.05)';
+          // Grid with pulsing effect
+          const pulse = Math.sin(Date.now() / 1000) * 0.02 + 0.05;
+          spaceInvadersState.ctx.strokeStyle = `rgba(255, 0, 255, ${pulse})`;
           spaceInvadersState.ctx.lineWidth = 0.5;
           for (let i = 0; i <= 400; i += 50) {
             spaceInvadersState.ctx.beginPath();
@@ -4072,10 +4143,10 @@
             spaceInvadersState.ctx.stroke();
           }
 
-          // Draw player ship
+          // Draw player ship with enhanced effect
           spaceInvadersState.ctx.fillStyle = '#00FF00';
           spaceInvadersState.ctx.shadowColor = '#00FF00';
-          spaceInvadersState.ctx.shadowBlur = 10;
+          spaceInvadersState.ctx.shadowBlur = 15;
           spaceInvadersState.ctx.beginPath();
           spaceInvadersState.ctx.moveTo(spaceInvadersState.player.x + 15, spaceInvadersState.player.y);
           spaceInvadersState.ctx.lineTo(spaceInvadersState.player.x, spaceInvadersState.player.y + 30);
@@ -4084,32 +4155,59 @@
           spaceInvadersState.ctx.lineTo(spaceInvadersState.player.x + 30, spaceInvadersState.player.y + 30);
           spaceInvadersState.ctx.closePath();
           spaceInvadersState.ctx.fill();
+          
+          // Draw engine glow
+          spaceInvadersState.ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+          spaceInvadersState.ctx.fillRect(spaceInvadersState.player.x + 8, spaceInvadersState.player.y + 25, 6, 8);
+          spaceInvadersState.ctx.fillRect(spaceInvadersState.player.x + 16, spaceInvadersState.player.y + 25, 6, 8);
           spaceInvadersState.ctx.shadowBlur = 0;
 
-          // Draw enemies
+          // Draw enemies with better visuals
           for (let enemy of spaceInvadersState.enemies) {
+            // Enemy body
             spaceInvadersState.ctx.fillStyle = '#FF00FF';
             spaceInvadersState.ctx.shadowColor = '#FF00FF';
-            spaceInvadersState.ctx.shadowBlur = 8;
+            spaceInvadersState.ctx.shadowBlur = 10;
             spaceInvadersState.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
             
-            // Eyes
+            // Animated eyes
+            const eyePulse = Math.sin(Date.now() / 150) * 2;
             spaceInvadersState.ctx.fillStyle = '#00FFFF';
-            spaceInvadersState.ctx.fillRect(enemy.x + 6, enemy.y + 8, 6, 6);
-            spaceInvadersState.ctx.fillRect(enemy.x + 18, enemy.y + 8, 6, 6);
+            spaceInvadersState.ctx.shadowColor = '#00FFFF';
+            spaceInvadersState.ctx.shadowBlur = 8;
+            spaceInvadersState.ctx.fillRect(enemy.x + 6, enemy.y + 8 + eyePulse, 6, 6);
+            spaceInvadersState.ctx.fillRect(enemy.x + 18, enemy.y + 8 + eyePulse, 6, 6);
+            
+            // Mouth
+            spaceInvadersState.ctx.strokeStyle = '#00FFFF';
+            spaceInvadersState.ctx.lineWidth = 1;
+            spaceInvadersState.ctx.beginPath();
+            spaceInvadersState.ctx.moveTo(enemy.x + 10, enemy.y + 20);
+            spaceInvadersState.ctx.lineTo(enemy.x + 20, enemy.y + 20);
+            spaceInvadersState.ctx.stroke();
             spaceInvadersState.ctx.shadowBlur = 0;
           }
 
-          // Draw player bullets
-          spaceInvadersState.ctx.fillStyle = '#00FF00';
+          // Draw player bullets with trail
           for (let bullet of spaceInvadersState.playerBullets) {
+            spaceInvadersState.ctx.fillStyle = '#00FF00';
+            spaceInvadersState.ctx.shadowColor = '#00FF00';
+            spaceInvadersState.ctx.shadowBlur = 10;
             spaceInvadersState.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            
+            // Trail
+            spaceInvadersState.ctx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+            spaceInvadersState.ctx.shadowBlur = 0;
+            spaceInvadersState.ctx.fillRect(bullet.x, bullet.y + 10, bullet.width, 10);
           }
 
           // Draw enemy bullets
-          spaceInvadersState.ctx.fillStyle = '#FF6B6B';
           for (let bullet of spaceInvadersState.enemyBullets) {
+            spaceInvadersState.ctx.fillStyle = '#FF6B6B';
+            spaceInvadersState.ctx.shadowColor = '#FF6B6B';
+            spaceInvadersState.ctx.shadowBlur = 8;
             spaceInvadersState.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            spaceInvadersState.ctx.shadowBlur = 0;
           }
         }
 
