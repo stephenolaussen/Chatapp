@@ -3424,6 +3424,10 @@
 
         pongGameState.ctx = pongGameState.canvas.getContext('2d');
 
+        const PONG_COURT_INSET = 6;
+        const PONG_MAX_VELOCITY = 6;
+        const PONG_MIN_ABS_VX = 1.2;
+
         function stopPongGame() {
           // Idempotent cleanup to avoid duplicate RAF loops and event listeners
           pongGameState.running = false;
@@ -3588,6 +3592,7 @@
 
           // Limit ball velocity to prevent tunneling
           const maxVelocity = 6;
+          const minAbsVx = 1.2;
           pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
           pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
 
@@ -3650,13 +3655,13 @@
             }
 
             // Re-apply velocity clamp after bumper deflection
-            pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
-            pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
+            pongGameState.ball.vx = Math.max(-PONG_MAX_VELOCITY, Math.min(PONG_MAX_VELOCITY, pongGameState.ball.vx));
+            pongGameState.ball.vy = Math.max(-PONG_MAX_VELOCITY, Math.min(PONG_MAX_VELOCITY, pongGameState.ball.vy));
 
             // Ensure bumper hit can't result in near-vertical loop
-            if (Math.abs(pongGameState.ball.vx) < minAbsVx) {
+            if (Math.abs(pongGameState.ball.vx) < PONG_MIN_ABS_VX) {
               const dir = pongGameState.ball.vx === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(pongGameState.ball.vx);
-              pongGameState.ball.vx = dir * minAbsVx;
+              pongGameState.ball.vx = dir * PONG_MIN_ABS_VX;
             }
 
             // Paddle collisions (swept test along X for this substep)
