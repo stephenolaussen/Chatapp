@@ -1037,8 +1037,9 @@
           max-width: 95vw;
           width: 95vw;
           padding: 1.5rem;
-          max-height: 90vh;
+          max-height: 100vh;
           overflow-y: auto;
+          box-sizing: border-box;
         }
 
         #snakeCanvas,
@@ -3573,7 +3574,7 @@
           }
           
           // Move AI paddle towards predicted ball position with smaller dead zone
-          const deadZone = 22;
+          const deadZone = 28;
           if (aiCenter < predictedBallY - deadZone) {
             pongGameState.aiPaddle.y += pongGameState.aiPaddle.speed;
           } else if (aiCenter > predictedBallY + deadZone) {
