@@ -1530,14 +1530,14 @@
             
             @media (max-width: 600px) {
               .pong-container {
-                padding: 1rem;
+                padding: 0.5rem;
                 max-width: 100%;
               }
             }
             
             .pong-header {
               text-align: center;
-              margin-bottom: 1rem;
+              margin-bottom: 0.5rem;
             }
             
             .pong-header h2 {
@@ -1569,8 +1569,8 @@
             @media (max-width: 600px) {
               .pong-canvas-wrapper {
                 max-width: 100%;
-                max-height: 70vh;
-                margin-bottom: 0.5rem;
+                max-height: 55vh;
+                margin-bottom: 0.3rem;
               }
             }
             
@@ -1584,7 +1584,7 @@
             .pong-stats {
               display: flex;
               gap: 1rem;
-              margin-bottom: 1rem;
+              margin-bottom: 0.5rem;
               justify-content: center;
             }
             
@@ -1614,18 +1614,18 @@
             
             .pong-instructions {
               background: rgba(67, 233, 123, 0.1);
-              padding: 0.75rem;
+              padding: 0.5rem;
               border-radius: 6px;
-              font-size: 0.85rem;
+              font-size: 0.75rem;
               color: #bbb;
               text-align: center;
-              margin-bottom: 1rem;
+              margin-bottom: 0.5rem;
               border-left: 3px solid #43e97b;
             }
             
             .pong-controls {
               text-align: center;
-              margin-bottom: 1rem;
+              margin-bottom: 0.3rem;
             }
             
             .btn-pong-play {
@@ -3688,24 +3688,24 @@
           const bumperHeight = 12;
           const bumperX = pongGameState.canvas.width / 2 - bumperWidth / 2;
           
-          // Top bumper
+          // Top bumper (pointing down)
           pongGameState.ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
           pongGameState.ctx.beginPath();
-          pongGameState.ctx.moveTo(bumperX, bumperHeight);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, 0);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth, bumperHeight);
+          pongGameState.ctx.moveTo(bumperX, 0);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, bumperHeight);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth, 0);
           pongGameState.ctx.closePath();
           pongGameState.ctx.fill();
           pongGameState.ctx.strokeStyle = 'rgba(255, 200, 100, 1)';
           pongGameState.ctx.lineWidth = 1.5;
           pongGameState.ctx.stroke();
           
-          // Bottom bumper
+          // Bottom bumper (pointing up)
           pongGameState.ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
           pongGameState.ctx.beginPath();
-          pongGameState.ctx.moveTo(bumperX, pongGameState.canvas.height - bumperHeight);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, pongGameState.canvas.height);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth, pongGameState.canvas.height - bumperHeight);
+          pongGameState.ctx.moveTo(bumperX, pongGameState.canvas.height);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, pongGameState.canvas.height - bumperHeight);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth, pongGameState.canvas.height);
           pongGameState.ctx.closePath();
           pongGameState.ctx.fill();
           pongGameState.ctx.strokeStyle = 'rgba(255, 200, 100, 1)';
