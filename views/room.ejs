@@ -3604,27 +3604,55 @@
             pongGameState.ball.y += stepY;
 
             // Ball bounce off top/bottom with clamping and angle change
-            const bumperWidth = 40;
+            const bumperWidth = 50;
             const bumperX = pongGameState.canvas.width / 2 - bumperWidth / 2;
             
-            if (pongGameState.ball.y - pongGameState.ball.radius < 0) {
-              pongGameState.ball.y = pongGameState.ball.radius;
-              // Check if ball hit center bumper
-              if (pongGameState.ball.x >= bumperX && pongGameState.ball.x <= bumperX + bumperWidth) {
-                // Deflect based on where it hit the bumper
+            if (pongGameState.ball.y - pongGameState.ball.radius < PONG_COURT_INSET) {
+              pongGameState.ball.y = PONG_COURT_INSET + pongGameState.ball.radius;
+              // Check if ball hit center bumper (expanded hit zone)
+              if (pongGameState.ball.x >= bumperX - 15 && pongGameState.ball.x <= bumperX + bumperWidth + 15) {
+                // Deflect based on where it hit the bumper - stronger deflection
                 const hitPos = (pongGameState.ball.x - bumperX) / bumperWidth - 0.5; // -0.5 to 0.5
-                pongGameState.ball.vx += hitPos * 2; // Add horizontal component
+                if (Math.abs(hitPos) < 0.1) {
+                  // Center hit - strong alternating kick
+                  pongGameState.ball.vx = (pongGameState.ball.vx > 0 ? 1 : -1) * 3.5;
+                } else {
+                  // Side hit - deflect proportionally
+                  pongGameState.ball.vx = hitPos * 4;
+                }
+                pongGameState.ball.vy = Math.abs(pongGameState.ball.vy) * 0.8; // Slight damping, bounce down
+              } else {
+                // Regular wall bounce
+                pongGameState.ball.vy = Math.abs(pongGameState.ball.vy);
               }
-              pongGameState.ball.vy = -Math.abs(pongGameState.ball.vy); // Force downward
-            } else if (pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height) {
-              pongGameState.ball.y = pongGameState.canvas.height - pongGameState.ball.radius;
-              // Check if ball hit center bumper
-              if (pongGameState.ball.x >= bumperX && pongGameState.ball.x <= bumperX + bumperWidth) {
-                // Deflect based on where it hit the bumper
+            } else if (pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height - PONG_COURT_INSET) {
+              pongGameState.ball.y = pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.ball.radius;
+              // Check if ball hit center bumper (expanded hit zone)
+              if (pongGameState.ball.x >= bumperX - 15 && pongGameState.ball.x <= bumperX + bumperWidth + 15) {
+                // Deflect based on where it hit the bumper - stronger deflection
                 const hitPos = (pongGameState.ball.x - bumperX) / bumperWidth - 0.5; // -0.5 to 0.5
-                pongGameState.ball.vx += hitPos * 2; // Add horizontal component
+                if (Math.abs(hitPos) < 0.1) {
+                  // Center hit - strong alternating kick
+                  pongGameState.ball.vx = (pongGameState.ball.vx > 0 ? 1 : -1) * 3.5;
+                } else {
+                  // Side hit - deflect proportionally
+                  pongGameState.ball.vx = hitPos * 4;
+                }
+                pongGameState.ball.vy = -Math.abs(pongGameState.ball.vy) * 0.8; // Slight damping, bounce up
+              } else {
+                // Regular wall bounce
+                pongGameState.ball.vy = -Math.abs(pongGameState.ball.vy);
               }
-              pongGameState.ball.vy = Math.abs(pongGameState.ball.vy) * -1; // Force upward
+            }
+
+            // Re-apply velocity clamp after bumper deflection
+            pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
+            pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
+
+            // Ensure bumper hit can't result in near-vertical loop
+            if (Math.abs(pongGameState.ball.vx) < minAbsVx) {
+              const dir = pongGameState.ball.vx === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(pongGameState.ball.vx);
+              pongGameState.ball.vx = dir * minAbsVx;
             }
 
             // Paddle collisions (swept test along X for this substep)
