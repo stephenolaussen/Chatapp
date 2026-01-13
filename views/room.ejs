@@ -3598,13 +3598,28 @@
             pongGameState.ball.x += stepX;
             pongGameState.ball.y += stepY;
 
-            // Ball bounce off top/bottom with clamping
+            // Ball bounce off top/bottom with clamping and angle change
+            const bumperWidth = 40;
+            const bumperX = pongGameState.canvas.width / 2 - bumperWidth / 2;
+            
             if (pongGameState.ball.y - pongGameState.ball.radius < 0) {
               pongGameState.ball.y = pongGameState.ball.radius;
-              pongGameState.ball.vy = -pongGameState.ball.vy;
+              // Check if ball hit center bumper
+              if (pongGameState.ball.x >= bumperX && pongGameState.ball.x <= bumperX + bumperWidth) {
+                // Deflect based on where it hit the bumper
+                const hitPos = (pongGameState.ball.x - bumperX) / bumperWidth - 0.5; // -0.5 to 0.5
+                pongGameState.ball.vx += hitPos * 2; // Add horizontal component
+              }
+              pongGameState.ball.vy = -Math.abs(pongGameState.ball.vy); // Force downward
             } else if (pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height) {
               pongGameState.ball.y = pongGameState.canvas.height - pongGameState.ball.radius;
-              pongGameState.ball.vy = -pongGameState.ball.vy;
+              // Check if ball hit center bumper
+              if (pongGameState.ball.x >= bumperX && pongGameState.ball.x <= bumperX + bumperWidth) {
+                // Deflect based on where it hit the bumper
+                const hitPos = (pongGameState.ball.x - bumperX) / bumperWidth - 0.5; // -0.5 to 0.5
+                pongGameState.ball.vx += hitPos * 2; // Add horizontal component
+              }
+              pongGameState.ball.vy = Math.abs(pongGameState.ball.vy) * -1; // Force upward
             }
 
             // Paddle collisions (swept test along X for this substep)
@@ -3667,6 +3682,35 @@
           pongGameState.ctx.strokeStyle = 'rgba(102, 126, 234, 0.6)';
           pongGameState.ctx.lineWidth = 2;
           pongGameState.ctx.strokeRect(1, 1, pongGameState.canvas.width - 2, pongGameState.canvas.height - 2);
+
+          // Draw top and bottom bumpers (center triangles)
+          const bumperWidth = 40;
+          const bumperHeight = 12;
+          const bumperX = pongGameState.canvas.width / 2 - bumperWidth / 2;
+          
+          // Top bumper
+          pongGameState.ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
+          pongGameState.ctx.beginPath();
+          pongGameState.ctx.moveTo(bumperX, bumperHeight);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, 0);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth, bumperHeight);
+          pongGameState.ctx.closePath();
+          pongGameState.ctx.fill();
+          pongGameState.ctx.strokeStyle = 'rgba(255, 200, 100, 1)';
+          pongGameState.ctx.lineWidth = 1.5;
+          pongGameState.ctx.stroke();
+          
+          // Bottom bumper
+          pongGameState.ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
+          pongGameState.ctx.beginPath();
+          pongGameState.ctx.moveTo(bumperX, pongGameState.canvas.height - bumperHeight);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, pongGameState.canvas.height);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth, pongGameState.canvas.height - bumperHeight);
+          pongGameState.ctx.closePath();
+          pongGameState.ctx.fill();
+          pongGameState.ctx.strokeStyle = 'rgba(255, 200, 100, 1)';
+          pongGameState.ctx.lineWidth = 1.5;
+          pongGameState.ctx.stroke();
 
           // Draw paddles with glow effect
           const drawPaddle = (paddle, isPlayer) => {
