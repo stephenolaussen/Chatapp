@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familieskatt-v2-1-70';
+const CACHE_NAME = 'familieskatt-v2-1-71';
 const urlsToCache = [
   '/',
   '/index.html',
