@@ -3549,11 +3549,26 @@
           pongGameState.playerPaddle.y += pongGameState.playerDir * pongGameState.playerPaddle.speed;
           pongGameState.playerPaddle.y = Math.max(0, Math.min(pongGameState.playerPaddle.y, pongGameState.canvas.height - pongGameState.playerPaddle.height));
 
-          // AI paddle
+          // AI paddle - predict where ball will be
           const aiCenter = pongGameState.aiPaddle.y + pongGameState.aiPaddle.height / 2;
-          if (aiCenter < pongGameState.ball.y - 35) {
+          
+          // Predict where ball will be when it reaches AI paddle
+          let predictedBallY = pongGameState.ball.y;
+          if (pongGameState.ball.vx > 0) {
+            // Ball moving towards AI - calculate frames until it reaches paddle
+            const distanceToAI = pongGameState.aiPaddle.x - pongGameState.ball.x;
+            const framesUntilImpact = distanceToAI / pongGameState.ball.vx;
+            predictedBallY = pongGameState.ball.y + (pongGameState.ball.vy * framesUntilImpact);
+            
+            // Clamp predicted position to canvas bounds
+            predictedBallY = Math.max(pongGameState.ball.radius, Math.min(pongGameState.canvas.height - pongGameState.ball.radius, predictedBallY));
+          }
+          
+          // Move AI paddle towards predicted ball position with smaller dead zone
+          const deadZone = 15;
+          if (aiCenter < predictedBallY - deadZone) {
             pongGameState.aiPaddle.y += pongGameState.aiPaddle.speed;
-          } else if (aiCenter > pongGameState.ball.y + 35) {
+          } else if (aiCenter > predictedBallY + deadZone) {
             pongGameState.aiPaddle.y -= pongGameState.aiPaddle.speed;
           }
           pongGameState.aiPaddle.y = Math.max(0, Math.min(pongGameState.aiPaddle.y, pongGameState.canvas.height - pongGameState.aiPaddle.height));
