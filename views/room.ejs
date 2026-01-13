@@ -33,6 +33,16 @@
         overflow: hidden;
       }
 
+      body.game-modal-open {
+        overflow: visible;
+        height: auto;
+      }
+
+      html.game-modal-open {
+        overflow: visible;
+        height: auto;
+      }
+
       .header {
         background: white;
         padding: 0.75rem 1rem;
@@ -771,8 +781,8 @@
         width: 98%;
         text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.2);
-        max-height: 95vh;
-        overflow-y: auto;
+        max-height: none !important;
+        overflow-y: visible;
       }
 
       .game-modal-content h2 {
@@ -1036,11 +1046,11 @@
         }
 
         .game-modal-content {
-          max-width: 95vw;
-          width: 95vw;
-          padding: 1.5rem;
-          max-height: 100vh;
-          overflow-y: auto;
+          max-width: 95vw !important;
+          width: 95vw !important;
+          padding: 0.5rem !important;
+          max-height: none !important;
+          overflow-y: visible !important;
           box-sizing: border-box;
         }
 
@@ -3229,6 +3239,8 @@
         }
 
         function selectGame(game) {
+          document.body.classList.add('game-modal-open');
+          document.documentElement.classList.add('game-modal-open');
           document.getElementById('gameMenu').style.display = 'none';
           if (game === 'flappybird') {
             document.getElementById('flappybirdGame').style.display = 'block';
@@ -3269,6 +3281,8 @@
         }
 
         function backToGameMenu() {
+          document.body.classList.remove('game-modal-open');
+          document.documentElement.classList.remove('game-modal-open');
           document.getElementById('gameMenu').style.display = 'block';
           document.getElementById('flappybirdGame').style.display = 'none';
           document.getElementById('snakeGame').style.display = 'none';
