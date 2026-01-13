@@ -32,27 +32,27 @@
         color: #1d1d1f;
         overflow: hidden;
       }
-            .pong-container {
-              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-              border-radius: 12px;
-              padding: 0.85rem;
-              max-width: 460px;
-              margin: 0.5rem auto;
-              box-shadow: 0 8px 32px rgba(67, 233, 123, 0.2);
-              display: flex;
-              flex-direction: column;
-              gap: 0.4rem;
-              padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-            }
 
-            @media (max-width: 600px) {
-              .pong-container {
-                padding: 0.45rem;
-                max-width: 100%;
-                margin: 0.2rem auto;
-                gap: 0.35rem;
-              }
-            }
+      .header {
+        background: white;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        border-bottom: 1px solid #e5e5e7;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        flex: 1;
         min-width: 0;
       }
 
@@ -90,29 +90,28 @@
 
       .user-list {
         display: none;
-            .pong-canvas-wrapper {
-              position: relative;
-              margin-bottom: 0.3rem;
-              border: 3px solid #43e97b;
-              border-radius: 8px;
-              overflow: hidden;
-              box-shadow: 0 0 30px rgba(67, 233, 123, 0.3), inset 0 0 20px rgba(67, 233, 123, 0.1);
-              --pong-ui-reserved: 280px;
-              --pong-size: min(90vw, 420px, calc(100svh - var(--pong-ui-reserved)));
-              width: clamp(240px, var(--pong-size), 420px);
-              height: clamp(240px, var(--pong-size), 420px);
-              margin: 0 auto;
-              box-sizing: border-box;
-              padding: 0;
-              touch-action: none;
-            }
+        position: absolute;
+        top: 60px;
+        right: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        max-height: 350px;
+        overflow-y: auto;
+        z-index: 100;
+        min-width: 220px;
+        border: 1px solid #e5e5e7;
+      }
 
-            @media (max-width: 600px) {
-              .pong-canvas-wrapper {
-                --pong-ui-reserved: 320px;
-                --pong-size: min(95vw, 360px, calc(100svh - var(--pong-ui-reserved)));
-              }
-            }
+      .user-list.show {
+        display: block;
+      }
+
+      .user-list-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
         gap: 0.5rem;
       }
 
@@ -1521,22 +1520,22 @@
             .pong-container {
               background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
               border-radius: 12px;
-              padding: 0.75rem;
-              max-width: 520px;
-              margin: 0.5rem auto;
+              padding: 0.3rem;
+              max-width: 100%;
+              margin: 0 auto;
               box-shadow: 0 8px 32px rgba(67, 233, 123, 0.2);
               display: flex;
               flex-direction: column;
-              gap: 0.5rem;
-              padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+              min-height: 100vh;
+              justify-content: center;
+              align-items: center;
             }
             
             @media (max-width: 600px) {
               .pong-container {
-                padding: 0.5rem;
+                padding: 0.2rem;
                 max-width: 100%;
-                margin: 0;
-                gap: 0.4rem;
+                min-height: 100vh;
               }
             }
             
@@ -1556,23 +1555,24 @@
             
             .pong-canvas-wrapper {
               position: relative;
+              margin-bottom: 0.3rem;
               border: 3px solid #43e97b;
               border-radius: 8px;
               overflow: hidden;
               box-shadow: 0 0 30px rgba(67, 233, 123, 0.3), inset 0 0 20px rgba(67, 233, 123, 0.1);
-              --pong-ui-reserved: 300px;
-              --pong-size: min(92vw, 420px, calc(100svh - var(--pong-ui-reserved)));
-              width: clamp(240px, var(--pong-size), 420px);
-              height: clamp(240px, var(--pong-size), 420px);
-              margin: 0 auto;
+              width: 90vw;
+              height: 90vw;
+              max-width: 500px;
+              max-height: 500px;
               box-sizing: border-box;
               padding: 0;
             }
             
             @media (max-width: 600px) {
               .pong-canvas-wrapper {
-                --pong-ui-reserved: 320px;
-                --pong-size: min(96vw, 420px, calc(100svh - var(--pong-ui-reserved)));
+                width: 95vw;
+                height: 95vw;
+                margin-bottom: 0.2rem;
               }
             }
             
@@ -3420,8 +3420,6 @@
 
         pongGameState.ctx = pongGameState.canvas.getContext('2d');
 
-        const PONG_COURT_INSET = 6;
-
         function stopPongGame() {
           // Idempotent cleanup to avoid duplicate RAF loops and event listeners
           pongGameState.running = false;
@@ -3464,7 +3462,7 @@
           document.addEventListener('keydown', handlePongKeydown);
           document.addEventListener('keyup', handlePongKeyup);
           document.addEventListener('mousemove', handlePongMouseMove);
-          document.addEventListener('touchmove', handlePongTouchMove, { passive: false });
+          document.addEventListener('touchmove', handlePongTouchMove);
 
           pongGameState.rafId = requestAnimationFrame(pongGameLoop);
         }
@@ -3511,28 +3509,15 @@
           const rect = pongGameState.canvas.getBoundingClientRect();
           const scaleY = pongGameState.canvas.height / rect.height;
           const y = (e.clientY - rect.top) * scaleY;
-          pongGameState.playerPaddle.y = Math.max(
-            PONG_COURT_INSET,
-            Math.min(
-              y - pongGameState.playerPaddle.height / 2,
-              pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.playerPaddle.height
-            )
-          );
+          pongGameState.playerPaddle.y = Math.max(0, Math.min(y - pongGameState.playerPaddle.height / 2, pongGameState.canvas.height - pongGameState.playerPaddle.height));
         }
 
         function handlePongTouchMove(e) {
           if (!pongGameState.running) return;
-          e.preventDefault();
           const rect = pongGameState.canvas.getBoundingClientRect();
           const scaleY = pongGameState.canvas.height / rect.height;
           const y = (e.touches[0].clientY - rect.top) * scaleY;
-          pongGameState.playerPaddle.y = Math.max(
-            PONG_COURT_INSET,
-            Math.min(
-              y - pongGameState.playerPaddle.height / 2,
-              pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.playerPaddle.height
-            )
-          );
+          pongGameState.playerPaddle.y = Math.max(0, Math.min(y - pongGameState.playerPaddle.height / 2, pongGameState.canvas.height - pongGameState.playerPaddle.height));
         }
 
         function handlePongKeydown(e) {
@@ -3570,13 +3555,7 @@
 
           // Move player paddle
           pongGameState.playerPaddle.y += pongGameState.playerDir * pongGameState.playerPaddle.speed;
-          pongGameState.playerPaddle.y = Math.max(
-            PONG_COURT_INSET,
-            Math.min(
-              pongGameState.playerPaddle.y,
-              pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.playerPaddle.height
-            )
-          );
+          pongGameState.playerPaddle.y = Math.max(0, Math.min(pongGameState.playerPaddle.y, pongGameState.canvas.height - pongGameState.playerPaddle.height));
 
           // AI paddle - predict where ball will be
           const aiCenter = pongGameState.aiPaddle.y + pongGameState.aiPaddle.height / 2;
@@ -3590,10 +3569,7 @@
             predictedBallY = pongGameState.ball.y + (pongGameState.ball.vy * framesUntilImpact);
             
             // Clamp predicted position to canvas bounds
-            predictedBallY = Math.max(
-              PONG_COURT_INSET + pongGameState.ball.radius,
-              Math.min(pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.ball.radius, predictedBallY)
-            );
+            predictedBallY = Math.max(pongGameState.ball.radius, Math.min(pongGameState.canvas.height - pongGameState.ball.radius, predictedBallY));
           }
           
           // Move AI paddle towards predicted ball position with smaller dead zone
@@ -3603,25 +3579,12 @@
           } else if (aiCenter > predictedBallY + deadZone) {
             pongGameState.aiPaddle.y -= pongGameState.aiPaddle.speed;
           }
-          pongGameState.aiPaddle.y = Math.max(
-            PONG_COURT_INSET,
-            Math.min(
-              pongGameState.aiPaddle.y,
-              pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.aiPaddle.height
-            )
-          );
+          pongGameState.aiPaddle.y = Math.max(0, Math.min(pongGameState.aiPaddle.y, pongGameState.canvas.height - pongGameState.aiPaddle.height));
 
           // Limit ball velocity to prevent tunneling
           const maxVelocity = 6;
           pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
           pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
-
-          // Prevent perfectly vertical rallies (vx ~ 0)
-          const minAbsVx = 1.2;
-          if (Math.abs(pongGameState.ball.vx) < minAbsVx) {
-            const dir = pongGameState.ball.vx === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(pongGameState.ball.vx);
-            pongGameState.ball.vx = dir * minAbsVx;
-          }
 
           // Substep integration: prevents missing collisions even if dt spikes.
           const dx = pongGameState.ball.vx * dtFactor;
@@ -3642,44 +3605,25 @@
             // Ball bounce off top/bottom with clamping and angle change
             const bumperWidth = 40;
             const bumperX = pongGameState.canvas.width / 2 - bumperWidth / 2;
-            const bumperKick = 2.6;
-            const bumperCenterKick = 2.2;
-            const bumperCenterEpsilon = 0.15;
             
-            if (pongGameState.ball.y - pongGameState.ball.radius < PONG_COURT_INSET) {
-              pongGameState.ball.y = PONG_COURT_INSET + pongGameState.ball.radius;
+            if (pongGameState.ball.y - pongGameState.ball.radius < 0) {
+              pongGameState.ball.y = pongGameState.ball.radius;
               // Check if ball hit center bumper
-              if (pongGameState.ball.x >= bumperX - pongGameState.ball.radius && pongGameState.ball.x <= bumperX + bumperWidth + pongGameState.ball.radius) {
+              if (pongGameState.ball.x >= bumperX && pongGameState.ball.x <= bumperX + bumperWidth) {
                 // Deflect based on where it hit the bumper
                 const hitPos = (pongGameState.ball.x - bumperX) / bumperWidth - 0.5; // -0.5 to 0.5
-                const kick = Math.abs(hitPos) < bumperCenterEpsilon
-                  ? (Math.random() > 0.5 ? 1 : -1) * bumperCenterKick
-                  : hitPos * bumperKick;
-                pongGameState.ball.vx += kick;
+                pongGameState.ball.vx += hitPos * 2; // Add horizontal component
               }
-              pongGameState.ball.vy = Math.abs(pongGameState.ball.vy); // Force downward (y+)
-            } else if (pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height - PONG_COURT_INSET) {
-              pongGameState.ball.y = pongGameState.canvas.height - PONG_COURT_INSET - pongGameState.ball.radius;
+              pongGameState.ball.vy = -Math.abs(pongGameState.ball.vy); // Force downward
+            } else if (pongGameState.ball.y + pongGameState.ball.radius > pongGameState.canvas.height) {
+              pongGameState.ball.y = pongGameState.canvas.height - pongGameState.ball.radius;
               // Check if ball hit center bumper
-              if (pongGameState.ball.x >= bumperX - pongGameState.ball.radius && pongGameState.ball.x <= bumperX + bumperWidth + pongGameState.ball.radius) {
+              if (pongGameState.ball.x >= bumperX && pongGameState.ball.x <= bumperX + bumperWidth) {
                 // Deflect based on where it hit the bumper
                 const hitPos = (pongGameState.ball.x - bumperX) / bumperWidth - 0.5; // -0.5 to 0.5
-                const kick = Math.abs(hitPos) < bumperCenterEpsilon
-                  ? (Math.random() > 0.5 ? 1 : -1) * bumperCenterKick
-                  : hitPos * bumperKick;
-                pongGameState.ball.vx += kick;
+                pongGameState.ball.vx += hitPos * 2; // Add horizontal component
               }
-              pongGameState.ball.vy = -Math.abs(pongGameState.ball.vy); // Force upward (y-)
-            }
-
-            // Re-apply velocity clamp after bumper deflection
-            pongGameState.ball.vx = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vx));
-            pongGameState.ball.vy = Math.max(-maxVelocity, Math.min(maxVelocity, pongGameState.ball.vy));
-
-            // Ensure bumper hit can't result in near-vertical loop
-            if (Math.abs(pongGameState.ball.vx) < minAbsVx) {
-              const dir = pongGameState.ball.vx === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(pongGameState.ball.vx);
-              pongGameState.ball.vx = dir * minAbsVx;
+              pongGameState.ball.vy = Math.abs(pongGameState.ball.vy) * -1; // Force upward
             }
 
             // Paddle collisions (swept test along X for this substep)
@@ -3733,20 +3677,15 @@
           pongGameState.ctx.lineWidth = 2;
           pongGameState.ctx.setLineDash([8, 6]);
           pongGameState.ctx.beginPath();
-          pongGameState.ctx.moveTo(pongGameState.canvas.width / 2, PONG_COURT_INSET);
-          pongGameState.ctx.lineTo(pongGameState.canvas.width / 2, pongGameState.canvas.height - PONG_COURT_INSET);
+          pongGameState.ctx.moveTo(pongGameState.canvas.width / 2, 0);
+          pongGameState.ctx.lineTo(pongGameState.canvas.width / 2, pongGameState.canvas.height);
           pongGameState.ctx.stroke();
           pongGameState.ctx.setLineDash([]);
 
           // Draw court border
           pongGameState.ctx.strokeStyle = 'rgba(102, 126, 234, 0.6)';
           pongGameState.ctx.lineWidth = 2;
-          pongGameState.ctx.strokeRect(
-            PONG_COURT_INSET,
-            PONG_COURT_INSET,
-            pongGameState.canvas.width - PONG_COURT_INSET * 2,
-            pongGameState.canvas.height - PONG_COURT_INSET * 2
-          );
+          pongGameState.ctx.strokeRect(1, 1, pongGameState.canvas.width - 2, pongGameState.canvas.height - 2);
 
           // Draw top and bottom bumpers (center triangles)
           const bumperWidth = 40;
@@ -3756,9 +3695,9 @@
           // Top bumper (pointing down)
           pongGameState.ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
           pongGameState.ctx.beginPath();
-          pongGameState.ctx.moveTo(bumperX, PONG_COURT_INSET);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, PONG_COURT_INSET + bumperHeight);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth, PONG_COURT_INSET);
+          pongGameState.ctx.moveTo(bumperX, 0);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, bumperHeight);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth, 0);
           pongGameState.ctx.closePath();
           pongGameState.ctx.fill();
           pongGameState.ctx.strokeStyle = 'rgba(255, 200, 100, 1)';
@@ -3768,9 +3707,9 @@
           // Bottom bumper (pointing up)
           pongGameState.ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
           pongGameState.ctx.beginPath();
-          pongGameState.ctx.moveTo(bumperX, pongGameState.canvas.height - PONG_COURT_INSET);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, pongGameState.canvas.height - PONG_COURT_INSET - bumperHeight);
-          pongGameState.ctx.lineTo(bumperX + bumperWidth, pongGameState.canvas.height - PONG_COURT_INSET);
+          pongGameState.ctx.moveTo(bumperX, pongGameState.canvas.height);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth / 2, pongGameState.canvas.height - bumperHeight);
+          pongGameState.ctx.lineTo(bumperX + bumperWidth, pongGameState.canvas.height);
           pongGameState.ctx.closePath();
           pongGameState.ctx.fill();
           pongGameState.ctx.strokeStyle = 'rgba(255, 200, 100, 1)';
