@@ -3569,7 +3569,7 @@
           }
           
           // Move AI paddle towards predicted ball position with smaller dead zone
-          const deadZone = 15;
+          const deadZone = 22;
           if (aiCenter < predictedBallY - deadZone) {
             pongGameState.aiPaddle.y += pongGameState.aiPaddle.speed;
           } else if (aiCenter > predictedBallY + deadZone) {
