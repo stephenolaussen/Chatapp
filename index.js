@@ -734,9 +734,9 @@ app.post('/newroom', jsonParser, (req, res) => {
         
         // Create new route for this room
         const roomName = typeof newRoom === 'string' ? newRoom : newRoom.name;
-        app.get('/' + encodeURIComponent(roomName), async (req, res) => {
+        app.get('/' + encodeURIComponent(roomName), isAuthenticated, async (req, res) => {
             const messages = await loadRoomMessages(roomName);
-            res.render('room', {room: roomName, messages: messages});
+            res.render('room', {room: roomName, messages: messages, user: req.user});
         });
         
         if(req.body.save) {
