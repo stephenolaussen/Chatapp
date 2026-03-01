@@ -1,4 +1,16 @@
-const CACHE_NAME = 'familieskatt-v2-1-91';
+let CACHE_NAME = 'familieskatt-cache';
+
+// Fetch the version from server to set dynamic cache name
+fetch('/version')
+  .then(res => res.json())
+  .then(data => {
+    CACHE_NAME = `familieskatt-v${data.version.replace(/\./g, '-')}`;
+  })
+  .catch(err => {
+    console.log('Failed to fetch version:', err);
+    CACHE_NAME = 'familieskatt-cache';
+  });
+
 const urlsToCache = [
   '/',
   '/index.html',
