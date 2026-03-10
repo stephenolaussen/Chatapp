@@ -1815,26 +1815,52 @@
     <script>
         // Register service worker and check for updates
         if ('serviceWorker' in navigator) {
+          let swRegistration = null;
+          
           navigator.serviceWorker.register('/sw.js').then(registration => {
-            // Check for updates every 30 seconds
-            setInterval(() => {
+            swRegistration = registration;
+            console.log('✅ Service Worker registered');
+            
+            // Check for updates every 10 seconds (more aggressive for quick updates)
+            let updateInterval = setInterval(() => {
+              console.log('🔍 Checking for SW updates...');
               registration.update().catch(err => console.log('Update check failed:', err));
-            }, 30000);
+            }, 10000);
+
+            // Also check for updates when page becomes visible
+            document.addEventListener('visibilitychange', () => {
+              if (!document.hidden) {
+                console.log('📱 Page became visible - checking for updates');
+                registration.update().catch(err => console.log('Update check failed:', err));
+              }
+            });
 
             // Listen for service worker updates
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
+              console.log('🆕 New service worker found');
+              
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('✨ New SW installed and ready - showing update prompt');
                   // Show update prompt
                   if (confirm('🔄 En ny versjon av appen er tilgjengelig! Vil du oppdatere nå?')) {
+                    console.log('👤 User accepted update - triggering SKIP_WAITING');
                     newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
+                    // Reload after a short delay to ensure the message was received
+                    setTimeout(() => {
+                      console.log('🔁 Reloading page...');
+                      window.location.reload();
+                    }, 500);
                   }
                 }
               });
             });
-          }).catch(err => console.log('SW registration failed:', err));
+          }).catch(err => {
+            console.error('❌ SW registration failed:', err);
+          });
+        } else {
+          console.warn('⚠️ Service Workers not supported');
         }
 
         const room = '<%-room%>';

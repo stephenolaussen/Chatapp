@@ -1,16 +1,5 @@
 let CACHE_NAME = 'familieskatt-cache';
 
-// Fetch the version from server to set dynamic cache name
-fetch('/version')
-  .then(res => res.json())
-  .then(data => {
-    CACHE_NAME = `familieskatt-v${data.version.replace(/\./g, '-')}`;
-  })
-  .catch(err => {
-    console.log('Failed to fetch version:', err);
-    CACHE_NAME = 'familieskatt-cache';
-  });
-
 const urlsToCache = [
   '/',
   '/index.html',
@@ -19,12 +8,28 @@ const urlsToCache = [
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
+// Helper function to get cache name with version
+async function getCacheName() {
+  try {
+    const res = await fetch('/version', { cache: 'no-store' });
+    const data = await res.json();
+    return `familieskatt-v${data.version.replace(/\./g, '-')}`;
+  } catch (err) {
+    console.log('Failed to fetch version:', err);
+    return 'familieskatt-cache';
+  }
+}
+
 // Install event
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache).catch(err => {
-        console.log('Cache addAll error:', err);
+    getCacheName().then(cacheName => {
+      CACHE_NAME = cacheName;
+      console.log('SW: Installing with cache name:', CACHE_NAME);
+      return caches.open(CACHE_NAME).then(cache => {
+        return cache.addAll(urlsToCache).catch(err => {
+          console.log('Cache addAll error:', err);
+        });
       });
     })
   );
@@ -34,19 +39,25 @@ self.addEventListener('install', event => {
 // Activate event - Start polling if rooms are stored
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          // Delete all old caches
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    getCacheName().then(cacheName => {
+      CACHE_NAME = cacheName;
+      console.log('SW: Activating with cache name:', CACHE_NAME);
+      return caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(name => {
+            // Delete all old caches except current
+            if (name !== CACHE_NAME) {
+              console.log('Deleting old cache:', name);
+              return caches.delete(name);
+            }
+          })
+        );
+      });
+    }).then(() => {
+      // Claim all clients
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
   
   // Start polling immediately if we have stored room info
   console.log('SW: Activated - checking for stored rooms');
